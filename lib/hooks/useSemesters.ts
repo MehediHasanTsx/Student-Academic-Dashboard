@@ -1,26 +1,14 @@
 'use client';
 
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Semester, type Subject } from '@/lib/db/db';
+import { db } from '@/lib/db/database';
+import type { Semester, Subject } from '@/types/database';
 
 export function useSemesters() {
   const semesters = useLiveQuery(() =>
-    db.semesters.orderBy('semesterNumber').toArray()
+    db.semesters.orderBy('number').toArray()
   );
   return semesters ?? [];
-}
-
-export function useSubjects(semesterId?: string) {
-  const subjects = useLiveQuery(
-    () => {
-      if (semesterId) {
-        return db.subjects.where('semesterId').equals(semesterId).toArray();
-      }
-      return db.subjects.toArray();
-    },
-    [semesterId]
-  );
-  return subjects ?? [];
 }
 
 export function useAllSubjects() {

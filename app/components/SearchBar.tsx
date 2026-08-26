@@ -12,6 +12,7 @@ export function SearchBar({ value, onChange, placeholder = 'Search projects…' 
   const [local, setLocal] = useState(value);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local state with external prop
     setLocal(value);
   }, [value]);
 
@@ -48,7 +49,7 @@ export function SearchBar({ value, onChange, placeholder = 'Search projects…' 
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         placeholder={placeholder}
-        className="form-input !pl-10 !pr-9"
+        className="form-input pl-10! pr-9!"
       />
       {local && (
         <button

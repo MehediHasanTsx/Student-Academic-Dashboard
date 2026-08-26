@@ -14,11 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Plus, Trash2, Clock } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { RoutineSlot, DayOfWeek } from '@/types/database';
 
@@ -37,7 +37,10 @@ export default function RoutinePage() {
     setRoutine(data);
   };
 
-  useEffect(() => { loadData(); }, [semesterId]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching from IndexedDB
+    void loadData();
+  }, [semesterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getSlotsByDay = (day: DayOfWeek) =>
     routine.filter((r) => r.dayOfWeek === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -141,6 +144,7 @@ function RoutineForm({ subjects, onSubmit, onCancel }: { subjects: { id: string;
     <form onSubmit={handleSubmit(doSubmit)}>
       <DialogHeader><DialogTitle>Add Class</DialogTitle><DialogDescription>Add a class to the weekly routine.</DialogDescription></DialogHeader>
       <div className="space-y-4 py-4">
+        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
         <div className="space-y-2"><Label>Subject</Label><Select value={watch('subjectId')} onValueChange={(v) => { if (v) setValue('subjectId', v); }}><SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger><SelectContent>{subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>{errors.subjectId && <p className="text-xs text-destructive">{errors.subjectId.message}</p>}</div>
         <div className="space-y-2"><Label>Day</Label><Select value={watch('dayOfWeek')} onValueChange={(v) => { if (v) setValue('dayOfWeek', v as DayOfWeek); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{DAYS_OF_WEEK.map(d => <SelectItem key={d} value={d}>{DAY_LABELS[d]}</SelectItem>)}</SelectContent></Select></div>
         <div className="grid grid-cols-2 gap-4">

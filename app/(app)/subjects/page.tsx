@@ -10,7 +10,7 @@ import { SUBJECT_COLORS } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -19,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -146,7 +145,7 @@ export default function SubjectsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 min-w-0">
                     <div
-                      className="mt-0.5 h-3 w-3 rounded-full flex-shrink-0"
+                      className="mt-0.5 h-3 w-3 rounded-full shrink-0"
                       style={{ backgroundColor: subject.color || SUBJECT_COLORS[0] }}
                     />
                     <div className="min-w-0">
@@ -294,6 +293,7 @@ function SubjectForm({
                 key={c}
                 type="button"
                 className={`h-6 w-6 rounded-full border-2 transition-all ${
+                // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern
                   watch('color') === c ? 'border-foreground scale-110' : 'border-transparent'
                 }`}
                 style={{ backgroundColor: c }}

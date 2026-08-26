@@ -27,7 +27,7 @@ export default function EditProjectPage({ params }: PageProps<'/lab-projects/[id
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-4">
         <p className="text-sm text-muted">Project not found</p>
-        <Link href="/lab-projects" className="btn btn-secondary !text-xs">
+        <Link href="/lab-projects" className="btn btn-secondary text-xs!">
           Back to Projects
         </Link>
       </div>
@@ -44,7 +44,7 @@ export default function EditProjectPage({ params }: PageProps<'/lab-projects/[id
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="9 18 15 12 9 6" />
         </svg>
-        <Link href={`/lab-projects/${project.id}`} className="hover:text-accent transition-colors truncate max-w-[200px]">
+        <Link href={`/lab-projects/${project.id}`} className="hover:text-accent transition-colors truncate max-w-50">
           {project.title}
         </Link>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -1,9 +1,9 @@
 'use client';
 
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db/db';
+import { db } from '@/lib/db/database';
 import { useSemesters, useAllSubjects } from '@/lib/hooks/useSemesters';
-import type { Project } from '@/lib/db/db';
+
 import { ProjectCard } from './ProjectCard';
 import { useState } from 'react';
 
@@ -19,7 +19,7 @@ export function ArchiveView() {
 
   // Group projects by year → subject
   const yearGroups = [1, 2, 3, 4].map((yearNum) => {
-    const yearSemesters = semesters.filter((s) => s.yearNumber === yearNum);
+    const yearSemesters = semesters.filter((s) => Math.ceil(s.number / 2) === yearNum);
     const yearSemesterIds = new Set(yearSemesters.map((s) => s.id));
     const yearSubjects = subjects.filter((s) => yearSemesterIds.has(s.semesterId));
 

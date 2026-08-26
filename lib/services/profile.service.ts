@@ -1,5 +1,5 @@
 import { db } from '@/lib/db/database';
-import { generateId } from '@/lib/utils/formatters';
+
 import type { Profile } from '@/types/database';
 
 const PROFILE_ID = 'student-profile';

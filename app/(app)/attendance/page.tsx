@@ -5,15 +5,15 @@ import { useProfile } from '@/lib/hooks/useProfile';
 import { useSubjects } from '@/lib/hooks/useSubjects';
 import { useAttendance } from '@/lib/hooks/useAttendance';
 import { ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_ICONS } from '@/lib/constants';
-import { todayISO, formatDate } from '@/lib/utils/formatters';
+import { todayISO } from '@/lib/utils/formatters';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { CheckSquare, AlertCircle, Target, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
+
+import { AlertCircle, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AttendanceStatus } from '@/types/database';
 
@@ -30,7 +30,6 @@ export default function AttendancePage() {
   const { subjects } = useSubjects(semesterId);
   const {
     records,
-    loading,
     overallStats,
     subjectStats,
     targetInfo,
@@ -118,7 +117,7 @@ export default function AttendancePage() {
       {!targetInfo.isAboveTarget && overallStats.totalConducted > 0 && (
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="flex items-center gap-3 py-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
             <p className="text-sm">{targetInfo.message}</p>
           </CardContent>
         </Card>
@@ -165,7 +164,7 @@ export default function AttendancePage() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 min-w-0">
                           <div
-                            className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                            className="h-2.5 w-2.5 rounded-full shrink-0"
                             style={{ backgroundColor: subject.color || '#3b82f6' }}
                           />
                           <div className="min-w-0">

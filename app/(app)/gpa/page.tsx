@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useProfile } from '@/lib/hooks/useProfile';
 import { useSubjects } from '@/lib/hooks/useSubjects';
 import { gpaService, type SemesterGpaResult, type CgpaResult, type TargetCgpaResult } from '@/lib/services/gpa.service';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,18 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { BarChart3, Plus, Target, TrendingUp, AlertCircle } from 'lucide-react';
+
+import { Target, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import type { GradeScale, Result, Subject } from '@/types/database';
+import type { GradeScale } from '@/types/database';
 
 export default function GpaPage() {
   const { profile } = useProfile();
@@ -39,16 +31,11 @@ export default function GpaPage() {
   const [gradeScale, setGradeScale] = useState<GradeScale[]>([]);
   const [semesterResult, setSemesterResult] = useState<SemesterGpaResult | null>(null);
   const [cgpaResult, setCgpaResult] = useState<CgpaResult | null>(null);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   // Target CGPA state
   const [targetCgpa, setTargetCgpa] = useState('3.50');
   const [remainingCredits, setRemainingCredits] = useState('60');
   const [targetResult, setTargetResult] = useState<TargetCgpaResult | null>(null);
-
-  useEffect(() => {
-    loadData();
-  }, [semesterId]);
 
   const loadData = async () => {
     try {
@@ -67,6 +54,11 @@ export default function GpaPage() {
       console.error('Failed to load GPA data:', err);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching from IndexedDB
+    void loadData();
+  }, [semesterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddResult = async (subjectId: string, grade: string) => {
     if (!semesterId) return;
@@ -292,7 +284,7 @@ export default function GpaPage() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                        <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
                         <p className="text-sm text-red-700 dark:text-red-400">
                           {targetResult.message}
                         </p>

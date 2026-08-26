@@ -121,7 +121,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                             : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                         )}
                       >
-                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                        <item.icon className="h-4 w-4 shrink-0" />
                         <span>{item.label}</span>
                       </Link>
                     </li>
@@ -147,7 +147,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
               : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
           )}
         >
-          <Settings className="h-4 w-4 flex-shrink-0" />
+          <Settings className="h-4 w-4 shrink-0" />
           <span>Settings</span>
         </Link>
       </div>

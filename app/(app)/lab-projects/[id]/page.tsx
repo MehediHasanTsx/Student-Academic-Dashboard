@@ -32,7 +32,7 @@ export default function ProjectDetailPage({ params }: PageProps<'/lab-projects/[
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-4">
         <p className="text-sm text-muted">Project not found</p>
-        <Link href="/lab-projects" className="btn btn-secondary !text-xs">
+        <Link href="/lab-projects" className="btn btn-secondary text-xs!">
           Back to Projects
         </Link>
       </div>
@@ -79,7 +79,7 @@ export default function ProjectDetailPage({ params }: PageProps<'/lab-projects/[
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              {semester.name} · {semester.year}
+              {semester.name} · Year {Math.ceil(semester.number / 2)}
             </span>
           )}
           {subject && (

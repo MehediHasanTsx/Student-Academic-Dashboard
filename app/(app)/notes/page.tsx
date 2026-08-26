@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, StickyNote, Search, Pencil } from 'lucide-react';
@@ -40,7 +40,10 @@ export default function NotesPage() {
     }
   };
 
-  useEffect(() => { loadData(); }, [search]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching from IndexedDB
+    void loadData();
+  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleEdit = (note: Note) => { setEditingNote(note); setDialogOpen(true); };
 
@@ -126,6 +129,7 @@ function NoteForm({ note, subjects, semesterId, onSubmit, onCancel }: { note: No
       <DialogHeader><DialogTitle>{note ? 'Edit Note' : 'New Note'}</DialogTitle><DialogDescription>{note ? 'Update your note.' : 'Create a new note.'}</DialogDescription></DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2"><Label>Title *</Label><Input placeholder="Note title" {...register('title')} />{errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}</div>
+        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
         <div className="space-y-2"><Label>Subject</Label><Select value={watch('subjectId') || 'none'} onValueChange={(v) => { setValue('subjectId', v === 'none' ? undefined : (v || undefined)); }}><SelectTrigger><SelectValue placeholder="Any subject" /></SelectTrigger><SelectContent><SelectItem value="none">None</SelectItem>{subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
         <div className="space-y-2"><Label>Content *</Label><Textarea placeholder="Write your note..." rows={8} {...register('content')} />{errors.content && <p className="text-xs text-destructive">{errors.content.message}</p>}</div>
       </div>

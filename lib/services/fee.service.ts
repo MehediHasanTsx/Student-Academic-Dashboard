@@ -1,6 +1,6 @@
 import { db } from '@/lib/db/database';
 import { generateId } from '@/lib/utils/formatters';
-import type { Fee, Payment, FeeType } from '@/types/database';
+import type { Fee, Payment } from '@/types/database';
 
 export interface FeeSummary {
   totalFees: number;

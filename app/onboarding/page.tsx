@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GraduationCap, ArrowRight, ArrowLeft, User, School, Phone } from 'lucide-react';
+import { GraduationCap, ArrowRight, ArrowLeft, User, School } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -117,6 +117,7 @@ export default function OnboardingPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern
   const currentSemester = watch('currentSemester');
 
   return (

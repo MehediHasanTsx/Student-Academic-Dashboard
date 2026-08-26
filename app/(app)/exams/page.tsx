@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, GraduationCap, Clock } from 'lucide-react';
@@ -35,7 +35,10 @@ export default function ExamsPage() {
     setExams(data.sort((a, b) => a.date.localeCompare(b.date)));
   };
 
-  useEffect(() => { loadData(); }, [semesterId]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching from IndexedDB
+    void loadData();
+  }, [semesterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const today = new Date().toISOString().split('T')[0];
   const upcoming = exams.filter((e) => e.date >= today);
@@ -69,7 +72,7 @@ export default function ExamsPage() {
           <h2 className="text-sm font-semibold text-muted-foreground">Upcoming</h2>
           {upcoming.map((e) => {
             const subject = subjects.find((s) => s.id === e.subjectId);
-            const daysLeft = Math.ceil((new Date(e.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const daysLeft = Math.ceil((new Date(e.date).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24));
             return (
               <Card key={e.id}>
                 <CardContent className="p-4 flex items-center justify-between">
@@ -136,6 +139,7 @@ function ExamForm({ subjects, onSubmit, onCancel }: { subjects: { id: string; na
       <DialogHeader><DialogTitle>Add Exam</DialogTitle><DialogDescription>Schedule an upcoming exam.</DialogDescription></DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2"><Label>Exam Name *</Label><Input placeholder="e.g. Mid-term" {...register('name')} />{errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}</div>
+        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
         <div className="space-y-2"><Label>Subject *</Label><Select value={watch('subjectId')} onValueChange={(v) => { if (v) setValue('subjectId', v); }}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Date *</Label><Input type="date" {...register('date')} />{errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}</div>

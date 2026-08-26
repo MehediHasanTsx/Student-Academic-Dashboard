@@ -3,9 +3,11 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { db, type Project } from '@/lib/db/db';
+import { db } from '@/lib/db/database';
+import type { Project } from '@/types/database';
 import { projectSchema, SUPPORTED_LANGUAGES, type ProjectFormData } from '@/lib/db/schemas';
-import { useSemesters, useSubjects } from '@/lib/hooks/useSemesters';
+import { useSemesters } from '@/lib/hooks/useSemesters';
+import { useSubjects } from '@/lib/hooks/useSubjects';
 
 interface ProjectFormProps {
   project?: Project;
@@ -43,7 +45,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
   const [showAddSubject, setShowAddSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState('');
 
-  const subjects = useSubjects(formData.semesterId || undefined);
+  const { subjects } = useSubjects(formData.semesterId || undefined);
 
   const updateField = useCallback(<K extends keyof ProjectFormData>(
     key: K,
@@ -84,10 +86,16 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
   const handleAddSubject = useCallback(async () => {
     if (!newSubjectName.trim() || !formData.semesterId) return;
     const id = uuidv4();
+    const now = new Date();
     await db.subjects.add({
       id,
       semesterId: formData.semesterId,
       name: newSubjectName.trim(),
+      code: newSubjectName.trim().slice(0, 6).toUpperCase(),
+      credits: 3,
+      type: 'lab',
+      createdAt: now,
+      updatedAt: now,
     });
     updateField('subjectId', id);
     setNewSubjectName('');
@@ -214,7 +222,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               id="description"
               value={formData.description}
               onChange={(e) => updateField('description', e.target.value)}
-              className={`form-input min-h-[80px] resize-y ${errors.description ? 'error' : ''}`}
+              className={`form-input min-h-20 resize-y ${errors.description ? 'error' : ''}`}
               placeholder="Describe what this project does…"
               rows={3}
             />
@@ -251,7 +259,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               <option value="">Select semester</option>
               {semesters.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.year})
+                  {s.name} (Year {Math.ceil(s.number / 2)})
                 </option>
               ))}
             </select>
@@ -284,7 +292,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
                 <button
                   type="button"
                   onClick={() => setShowAddSubject(!showAddSubject)}
-                  className="btn-icon flex-shrink-0 border border-border"
+                  className="btn-icon shrink-0 border border-border"
                   title="Add new subject"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -303,7 +311,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
                   type="text"
                   value={newSubjectName}
                   onChange={(e) => setNewSubjectName(e.target.value)}
-                  className="form-input !text-xs"
+                  className="form-input text-xs!"
                   placeholder="Subject name (e.g. Data Structures)"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -315,7 +323,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
                 <button
                   type="button"
                   onClick={handleAddSubject}
-                  className="btn btn-primary !px-3 !py-1.5 !text-xs"
+                  className="btn btn-primary px-3! py-1.5! text-xs!"
                 >
                   Add
                 </button>
@@ -356,7 +364,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               id="sourceCode"
               value={formData.sourceCode}
               onChange={(e) => updateField('sourceCode', e.target.value)}
-              className="form-input min-h-[200px] resize-y font-mono text-xs leading-relaxed"
+              className="form-input min-h-50 resize-y font-mono text-xs leading-relaxed"
               placeholder="Paste your source code here…"
               rows={12}
               spellCheck={false}
@@ -396,7 +404,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               <button
                 type="button"
                 onClick={addTech}
-                className="btn btn-secondary !px-3 !text-xs"
+                className="btn btn-secondary px-3! text-xs!"
               >
                 Add
               </button>
@@ -439,7 +447,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               <button
                 type="button"
                 onClick={addTag}
-                className="btn btn-secondary !px-3 !text-xs"
+                className="btn btn-secondary px-3! text-xs!"
               >
                 Add
               </button>
@@ -521,7 +529,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               id="overview"
               value={formData.overview}
               onChange={(e) => updateField('overview', e.target.value)}
-              className="form-input min-h-[60px] resize-y"
+              className="form-input min-h-15 resize-y"
               placeholder="Brief overview of this project…"
               rows={2}
             />
@@ -533,7 +541,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               id="objective"
               value={formData.objective}
               onChange={(e) => updateField('objective', e.target.value)}
-              className="form-input min-h-[60px] resize-y"
+              className="form-input min-h-15 resize-y"
               placeholder="What is the objective of this lab/project?"
               rows={2}
             />
@@ -545,7 +553,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               id="conceptsLearned"
               value={formData.conceptsLearned}
               onChange={(e) => updateField('conceptsLearned', e.target.value)}
-              className="form-input min-h-[60px] resize-y"
+              className="form-input min-h-15 resize-y"
               placeholder="Key concepts learned from this project…"
               rows={2}
             />
@@ -557,7 +565,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               id="outputResult"
               value={formData.outputResult}
               onChange={(e) => updateField('outputResult', e.target.value)}
-              className="form-input min-h-[60px] resize-y"
+              className="form-input min-h-15 resize-y"
               placeholder="Expected output or result…"
               rows={2}
             />
@@ -569,7 +577,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
               id="notes"
               value={formData.notes}
               onChange={(e) => updateField('notes', e.target.value)}
-              className="form-input min-h-[60px] resize-y"
+              className="form-input min-h-15 resize-y"
               placeholder="Additional notes, observations, or reminders…"
               rows={2}
             />

@@ -33,7 +33,7 @@ export function FilterPanel({
   const subjects = useAllSubjects();
 
   const filteredSemesters = yearNumber
-    ? semesters.filter((s) => s.yearNumber === yearNumber)
+    ? semesters.filter((s) => Math.ceil(s.number / 2) === yearNumber)
     : semesters;
 
   const filteredSubjects = semesterId
@@ -41,7 +41,7 @@ export function FilterPanel({
     : yearNumber
       ? subjects.filter((s) => {
           const sem = semesters.find((sem) => sem.id === s.semesterId);
-          return sem?.yearNumber === yearNumber;
+          return sem ? Math.ceil(sem.number / 2) === yearNumber : false;
         })
       : subjects;
 
@@ -59,7 +59,7 @@ export function FilterPanel({
             onSemesterChange(undefined);
             onSubjectChange(undefined);
           }}
-          className="form-input !w-auto !py-2 !text-xs"
+          className="form-input w-auto! py-2! text-xs!"
           id="filter-year"
         >
           <option value="">All Years</option>
@@ -79,10 +79,10 @@ export function FilterPanel({
             // Auto-set year from semester
             if (val) {
               const sem = semesters.find((s) => s.id === val);
-              if (sem) onYearChange(sem.yearNumber);
+              if (sem) onYearChange(Math.ceil(sem.number / 2));
             }
           }}
-          className="form-input !w-auto !py-2 !text-xs"
+          className="form-input w-auto! py-2! text-xs!"
           id="filter-semester"
         >
           <option value="">All Semesters</option>
@@ -97,7 +97,7 @@ export function FilterPanel({
         <select
           value={subjectId ?? ''}
           onChange={(e) => onSubjectChange(e.target.value || undefined)}
-          className="form-input !w-auto !py-2 !text-xs"
+          className="form-input w-auto! py-2! text-xs!"
           id="filter-subject"
         >
           <option value="">All Subjects</option>
@@ -112,7 +112,7 @@ export function FilterPanel({
         <select
           value={language ?? ''}
           onChange={(e) => onLanguageChange(e.target.value || undefined)}
-          className="form-input !w-auto !py-2 !text-xs"
+          className="form-input w-auto! py-2! text-xs!"
           id="filter-language"
         >
           <option value="">All Languages</option>
@@ -127,7 +127,7 @@ export function FilterPanel({
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="form-input !w-auto !py-2 !text-xs"
+          className="form-input w-auto! py-2! text-xs!"
           id="filter-sort"
         >
           <option value="recent">Recently Added</option>
@@ -145,7 +145,7 @@ export function FilterPanel({
               onSubjectChange(undefined);
               onLanguageChange(undefined);
             }}
-            className="btn-ghost !text-xs text-danger"
+            className="btn-ghost text-xs! text-danger"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />

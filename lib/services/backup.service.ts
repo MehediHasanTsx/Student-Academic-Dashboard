@@ -1,5 +1,5 @@
 import { db } from '@/lib/db/database';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { format } from 'date-fns';
 
 /**
@@ -141,46 +141,46 @@ export const backupService = {
       ],
       async () => {
         await db.profile.clear();
-        if (backup.data.profile.length) await db.profile.bulkAdd(backup.data.profile as any);
+        if (backup.data.profile.length) await db.profile.bulkAdd(backup.data.profile as never[]);
 
         await db.semesters.clear();
-        if (backup.data.semesters.length) await db.semesters.bulkAdd(backup.data.semesters as any);
+        if (backup.data.semesters.length) await db.semesters.bulkAdd(backup.data.semesters as never[]);
 
         await db.subjects.clear();
-        if (backup.data.subjects.length) await db.subjects.bulkAdd(backup.data.subjects as any);
+        if (backup.data.subjects.length) await db.subjects.bulkAdd(backup.data.subjects as never[]);
 
         await db.attendance.clear();
-        if (backup.data.attendance.length) await db.attendance.bulkAdd(backup.data.attendance as any);
+        if (backup.data.attendance.length) await db.attendance.bulkAdd(backup.data.attendance as never[]);
 
         await db.results.clear();
-        if (backup.data.results.length) await db.results.bulkAdd(backup.data.results as any);
+        if (backup.data.results.length) await db.results.bulkAdd(backup.data.results as never[]);
 
         await db.gradeScale.clear();
-        if (backup.data.gradeScale.length) await db.gradeScale.bulkAdd(backup.data.gradeScale as any);
+        if (backup.data.gradeScale.length) await db.gradeScale.bulkAdd(backup.data.gradeScale as never[]);
 
         await db.fees.clear();
-        if (backup.data.fees.length) await db.fees.bulkAdd(backup.data.fees as any);
+        if (backup.data.fees.length) await db.fees.bulkAdd(backup.data.fees as never[]);
 
         await db.payments.clear();
-        if (backup.data.payments.length) await db.payments.bulkAdd(backup.data.payments as any);
+        if (backup.data.payments.length) await db.payments.bulkAdd(backup.data.payments as never[]);
 
         await db.routine.clear();
-        if (backup.data.routine.length) await db.routine.bulkAdd(backup.data.routine as any);
+        if (backup.data.routine.length) await db.routine.bulkAdd(backup.data.routine as never[]);
 
         await db.assignments.clear();
-        if (backup.data.assignments.length) await db.assignments.bulkAdd(backup.data.assignments as any);
+        if (backup.data.assignments.length) await db.assignments.bulkAdd(backup.data.assignments as never[]);
 
         await db.exams.clear();
-        if (backup.data.exams.length) await db.exams.bulkAdd(backup.data.exams as any);
+        if (backup.data.exams.length) await db.exams.bulkAdd(backup.data.exams as never[]);
 
         await db.notes.clear();
-        if (backup.data.notes.length) await db.notes.bulkAdd(backup.data.notes as any);
+        if (backup.data.notes.length) await db.notes.bulkAdd(backup.data.notes as never[]);
 
         await db.settings.clear();
-        if (backup.data.settings.length) await db.settings.bulkAdd(backup.data.settings as any);
+        if (backup.data.settings.length) await db.settings.bulkAdd(backup.data.settings as never[]);
 
         await db.projects.clear();
-        if (backup.data.projects.length) await db.projects.bulkAdd(backup.data.projects as any);
+        if (backup.data.projects.length) await db.projects.bulkAdd(backup.data.projects as never[]);
       }
     );
   },

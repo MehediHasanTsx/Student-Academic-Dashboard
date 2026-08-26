@@ -30,7 +30,10 @@ export function useAttendance(semesterId: string | undefined) {
     }
   }, [semesterId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching pattern: loading from IndexedDB
+    void load();
+  }, [load]);
 
   const markAttendance = useCallback(async (
     subjectId: string,

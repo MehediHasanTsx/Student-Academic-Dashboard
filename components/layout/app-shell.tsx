@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-shrink-0">
+      <aside className="hidden lg:flex lg:w-64 lg:shrink-0">
         <Sidebar />
       </aside>
 

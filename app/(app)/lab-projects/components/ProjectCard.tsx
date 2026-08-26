@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { Project, Semester, Subject } from '@/lib/db/db';
+import type { Project, Semester, Subject } from '@/types/database';
 import { SUPPORTED_LANGUAGES } from '@/lib/db/schemas';
 
 interface ProjectCardProps {
@@ -26,7 +26,7 @@ export function ProjectCard({ project, semester, subject }: ProjectCardProps) {
           <h3 className="text-sm font-semibold text-foreground truncate">{project.title}</h3>
           <p className="mt-0.5 text-xs text-muted">{project.labNumber}</p>
         </div>
-        <span className="chip-accent chip flex-shrink-0 text-[0.65rem]">{langLabel}</span>
+        <span className="chip-accent chip shrink-0 text-[0.65rem]">{langLabel}</span>
       </div>
 
       {/* Description */}
@@ -37,7 +37,7 @@ export function ProjectCard({ project, semester, subject }: ProjectCardProps) {
       {/* Academic Info */}
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         {semester && (
-          <span className="chip text-[0.6rem]">{semester.year}</span>
+          <span className="chip text-[0.6rem]">Year {Math.ceil(semester.number / 2)}</span>
         )}
         {semester && (
           <span className="chip text-[0.6rem]">{semester.name}</span>

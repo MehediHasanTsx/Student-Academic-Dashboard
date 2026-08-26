@@ -8,21 +8,21 @@ import { formatCurrency, formatDate } from '@/lib/utils/formatters';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { feeSchema, paymentSchema, type FeeFormData, type PaymentFormData } from '@/schemas/fee';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { DollarSign, Plus, Trash2, Receipt } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Fee, Payment, FeeType, FeeStatus } from '@/types/database';
 
@@ -47,7 +47,10 @@ export default function FeesPage() {
     setSummary(feeService.calculateSummary(f, p));
   };
 
-  useEffect(() => { loadData(); }, [semesterId]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching from IndexedDB
+    void loadData();
+  }, [semesterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDeleteFee = async () => {
     if (!deleteTarget) return;
@@ -176,6 +179,7 @@ function FeeForm({ onSubmit, onCancel }: { onSubmit: (data: FeeFormData) => Prom
     <form onSubmit={handleSubmit(doSubmit)}>
       <DialogHeader><DialogTitle>Add Fee</DialogTitle><DialogDescription>Record a new fee for this semester.</DialogDescription></DialogHeader>
       <div className="space-y-4 py-4">
+        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
         <div className="space-y-2"><Label>Fee Type</Label><Select value={watch('type')} onValueChange={(v) => { if (v) setValue('type', v as FeeType); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{FEE_TYPES.map(t => <SelectItem key={t} value={t}>{FEE_TYPE_LABELS[t]}</SelectItem>)}</SelectContent></Select></div>
         <div className="space-y-2"><Label>Amount (৳)</Label><Input type="number" step="0.01" {...register('amount', { valueAsNumber: true })} />{errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}</div>
         <div className="space-y-2"><Label>Status</Label><Select value={watch('status')} onValueChange={(v) => { if (v) setValue('status', v as FeeStatus); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">Pending</SelectItem><SelectItem value="partial">Partial</SelectItem><SelectItem value="paid">Paid</SelectItem></SelectContent></Select></div>

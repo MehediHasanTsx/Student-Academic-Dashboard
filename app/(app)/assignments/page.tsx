@@ -14,11 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, ClipboardList, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Assignment, AssignmentStatus, AssignmentPriority } from '@/types/database';
 
@@ -37,7 +37,10 @@ export default function AssignmentsPage() {
     setAssignments(data.sort((a, b) => a.deadline.localeCompare(b.deadline)));
   };
 
-  useEffect(() => { loadData(); }, [semesterId]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching from IndexedDB
+    void loadData();
+  }, [semesterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = assignments.filter((a) => filter === 'all' || a.status === filter);
 
@@ -126,6 +129,7 @@ function AssignmentForm({ subjects, onSubmit, onCancel }: { subjects: { id: stri
       <DialogHeader><DialogTitle>Add Assignment</DialogTitle><DialogDescription>Add a new assignment to track.</DialogDescription></DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2"><Label>Title *</Label><Input placeholder="Assignment title" {...register('title')} />{errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}</div>
+        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
         <div className="space-y-2"><Label>Subject *</Label><Select value={watch('subjectId')} onValueChange={(v) => { if (v) setValue('subjectId', v); }}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>{errors.subjectId && <p className="text-xs text-destructive">{errors.subjectId.message}</p>}</div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Deadline *</Label><Input type="datetime-local" {...register('deadline')} />{errors.deadline && <p className="text-xs text-destructive">{errors.deadline.message}</p>}</div>

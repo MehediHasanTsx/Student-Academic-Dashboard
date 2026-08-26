@@ -24,7 +24,10 @@ export function useSubjects(semesterId: string | undefined) {
     }
   }, [semesterId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching pattern: loading from IndexedDB
+    void load();
+  }, [load]);
 
   const createSubject = useCallback(async (data: Parameters<typeof subjectService.create>[1]) => {
     if (!semesterId) throw new Error('No semester selected');

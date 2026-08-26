@@ -144,7 +144,7 @@ export function CodeBlock({
         <div className="flex min-w-fit">
           {showLineNumbers && (
             <div
-              className="sticky left-0 z-10 flex flex-col items-end border-r border-border/50 bg-code-bg py-5 pl-3 pr-3 font-mono text-[0.7rem] leading-[1.7] text-muted/40 select-none flex-shrink-0"
+              className="sticky left-0 z-10 flex flex-col items-end border-r border-border/50 bg-code-bg py-5 pl-3 pr-3 font-mono text-[0.7rem] leading-[1.7] text-muted/40 select-none shrink-0"
               aria-hidden="true"
             >
               {lines.map((_, i) => (
@@ -152,7 +152,7 @@ export function CodeBlock({
               ))}
             </div>
           )}
-          <pre className="!m-0 !rounded-none flex-1 min-w-0">
+          <pre className="m-0! rounded-none! flex-1 min-w-0">
             <code
               className={`language-${language} hljs`}
               dangerouslySetInnerHTML={{ __html: highlightedHtml }}

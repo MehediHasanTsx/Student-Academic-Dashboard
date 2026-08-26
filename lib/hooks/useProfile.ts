@@ -19,7 +19,10 @@ export function useProfile() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching pattern: loading from IndexedDB on mount
+    void load();
+  }, [load]);
 
   const createProfile = useCallback(async (data: Parameters<typeof profileService.create>[0]) => {
     const p = await profileService.create(data);

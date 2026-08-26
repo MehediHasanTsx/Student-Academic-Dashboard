@@ -1,7 +1,8 @@
 'use client';
 
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Project } from '@/lib/db/db';
+import { db } from '@/lib/db/database';
+
 
 export type SortOption = 'recent' | 'updated' | 'alphabetical' | 'semester';
 
@@ -35,9 +36,10 @@ export function useProjects(options: UseProjectsOptions = {}) {
 
       // Filter by year (needs semester lookup)
       if (yearNumber) {
-        const semesterIds = (
-          await db.semesters.where('yearNumber').equals(yearNumber).toArray()
-        ).map((s) => s.id);
+        const sems = await db.semesters.toArray();
+        const semesterIds = sems
+          .filter((s) => Math.ceil(s.number / 2) === yearNumber)
+          .map((s) => s.id);
         results = results.filter((p) => semesterIds.includes(p.semesterId));
       }
 
@@ -68,19 +70,17 @@ export function useProjects(options: UseProjectsOptions = {}) {
       // Sort
       switch (sort) {
         case 'recent':
-          results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+          results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           break;
         case 'updated':
-          results.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+          results.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
           break;
         case 'alphabetical':
           results.sort((a, b) => a.title.localeCompare(b.title));
           break;
         case 'semester':
-          // Will sort by semesterId which is UUID — we need actual semester number
-          // So we fetch semester data
           const sems = await db.semesters.toArray();
-          const semOrder = new Map(sems.map((s) => [s.id, s.semesterNumber]));
+          const semOrder = new Map(sems.map((s) => [s.id, s.number]));
           results.sort(
             (a, b) => (semOrder.get(a.semesterId) ?? 0) - (semOrder.get(b.semesterId) ?? 0)
           );

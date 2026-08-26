@@ -13,12 +13,12 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts';
 
-const CHART_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
 
 export default function AnalyticsPage() {
   const { profile } = useProfile();
   const semesterId = profile ? `semester-${profile.currentSemester}` : undefined;
-  const { overallStats, subjectStats } = useAttendance(semesterId);
+  const { overallStats } = useAttendance(semesterId);
   const [cgpa, setCgpa] = useState<CgpaResult | null>(null);
   const [totalCredits, setTotalCredits] = useState(160);
 

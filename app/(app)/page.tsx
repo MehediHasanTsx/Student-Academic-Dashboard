@@ -11,24 +11,20 @@ import { examService } from '@/lib/services/exam.service';
 import { feeService, type FeeSummary } from '@/lib/services/fee.service';
 import { routineService } from '@/lib/services/routine.service';
 import { formatCurrency, formatDate, formatTime, getCurrentDay } from '@/lib/utils/formatters';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+
 import { Separator } from '@/components/ui/separator';
 import {
   CheckSquare,
   BarChart3,
   BookOpen,
   DollarSign,
-  Calendar,
   ClipboardList,
   GraduationCap,
   TrendingUp,
-  Clock,
-  Plus,
   ArrowRight,
-  Target,
   AlertCircle,
 } from 'lucide-react';
 import type { Assignment, Exam, RoutineSlot, Subject, DayOfWeek } from '@/types/database';
@@ -123,7 +119,7 @@ export default function DashboardPage() {
           value={cgpa ? cgpa.cgpa.toFixed(2) : '0.00'}
           subtitle={`${cgpa?.totalCredits || 0} credits`}
           icon={TrendingUp}
-          href="/gpa/cgpa"
+          href="/gpa"
         />
         <StatsCard
           title="Pending Fees"
@@ -139,7 +135,7 @@ export default function DashboardPage() {
       {!targetInfo.isAboveTarget && overallStats.totalConducted > 0 && (
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="flex items-center gap-3 py-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
             <p className="text-sm text-amber-700 dark:text-amber-400">
               {targetInfo.message}
             </p>
@@ -153,9 +149,11 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Today&apos;s Classes</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/routine">View All <ArrowRight className="ml-1 h-3 w-3" /></Link>
-              </Button>
+              <Link href="/routine">
+                <Button variant="ghost" size="sm">
+                  View All <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -167,7 +165,7 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 {todayClasses.map((slot) => (
                   <div key={slot.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                    <div className="flex flex-col items-center text-xs text-muted-foreground min-w-[60px]">
+                    <div className="flex flex-col items-center text-xs text-muted-foreground min-w-15">
                       <span className="font-medium">{formatTime(slot.startTime)}</span>
                       <span>–</span>
                       <span>{formatTime(slot.endTime)}</span>
@@ -210,9 +208,11 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Upcoming Assignments</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/assignments">View All <ArrowRight className="ml-1 h-3 w-3" /></Link>
-              </Button>
+              <Link href="/assignments">
+                <Button variant="ghost" size="sm">
+                  View All <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -246,9 +246,11 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Upcoming Exams</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/exams">View All <ArrowRight className="ml-1 h-3 w-3" /></Link>
-              </Button>
+              <Link href="/exams">
+                <Button variant="ghost" size="sm">
+                  View All <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -260,8 +262,9 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 {upcomingExams.map((e) => {
                   const subject = subjects.find((s) => s.id === e.subjectId);
+                  const todayStr = new Date().toISOString().split('T')[0];
                   const daysLeft = Math.ceil(
-                    (new Date(e.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                    (new Date(e.date).getTime() - new Date(todayStr).getTime()) / (1000 * 60 * 60 * 24)
                   );
                   return (
                     <div key={e.id} className="flex items-center justify-between rounded-lg border border-border p-3">
@@ -327,12 +330,12 @@ function QuickAction({
   label: string;
 }) {
   return (
-    <Button variant="outline" className="h-auto flex-col gap-1.5 py-3 text-xs" asChild>
-      <Link href={href}>
+    <Link href={href} className="w-full">
+      <Button variant="outline" className="h-auto w-full flex-col gap-1.5 py-3 text-xs">
         <Icon className="h-4 w-4" />
         {label}
-      </Link>
-    </Button>
+      </Button>
+    </Link>
   );
 }
 

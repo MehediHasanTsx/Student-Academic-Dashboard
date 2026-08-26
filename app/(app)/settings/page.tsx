@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Settings, Moon, Sun, Monitor, Download, Upload, Trash2, User, GraduationCap, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,7 +18,7 @@ import type { Settings as SettingsType } from '@/types/database';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { profile, updateProfile } = useProfile();
+  const { profile } = useProfile();
   const [settings, setSettings] = useState<SettingsType | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
