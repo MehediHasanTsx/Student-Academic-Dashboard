@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
             {gpaChartData.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">No GPA data yet.</p>
             ) : (
-              <div className="h-[250px]">
+              <div className="h-62.5">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={gpaChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -103,7 +103,7 @@ export default function AnalyticsPage() {
             {attendancePieData.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">No attendance data yet.</p>
             ) : (
-              <div className="h-[250px] flex items-center justify-center">
+              <div className="h-62.5 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie

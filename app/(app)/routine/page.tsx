@@ -102,7 +102,7 @@ export default function RoutinePage() {
                       const subject = subjects.find((s) => s.id === slot.subjectId);
                       return (
                         <div key={slot.id} className="flex items-center gap-3 rounded-md border border-border p-2.5 group">
-                          <div className="text-xs text-muted-foreground min-w-[90px] font-mono">
+                          <div className="text-xs text-muted-foreground min-w-22.5 font-mono">
                             {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
                           </div>
                           <div className="flex-1 min-w-0">

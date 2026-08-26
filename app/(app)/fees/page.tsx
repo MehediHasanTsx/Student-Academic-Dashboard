@@ -147,7 +147,7 @@ export default function FeesPage() {
                       <p className="text-xs text-muted-foreground">{formatDate(p.date)} {p.method ? `· ${p.method}` : ''}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {p.note && <p className="text-xs text-muted-foreground max-w-[150px] truncate">{p.note}</p>}
+                      {p.note && <p className="text-xs text-muted-foreground max-w-37.5 truncate">{p.note}</p>}
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget({ type: 'payment', id: p.id, name: formatCurrency(p.amount) })}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </div>
                   </CardContent>
