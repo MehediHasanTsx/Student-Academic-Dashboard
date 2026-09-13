@@ -1,6 +1,8 @@
-# 🎓 Student Academic Dashboard
+# 🎓 DCC CSE
 
-A complete, production-ready, offline-first Progressive Web App (PWA) built for university students to manage their entire academic life in one unified, modern dashboard.
+A complete, production-ready, offline-first Progressive Web App (PWA) and Android application built for **Dhaka City College CSE students** to manage their entire academic life in one unified, modern dashboard.
+
+> **Note:** This is an independent student project. It is not officially endorsed by or affiliated with Dhaka City College.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.3.0-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
@@ -12,43 +14,53 @@ A complete, production-ready, offline-first Progressive Web App (PWA) built for 
 
 ## ✨ Features
 
+- 🔐 **Secure Authentication**:
+  - Username + Mobile Number + Password registration
+  - Server-side password hashing (bcryptjs, 12 rounds)
+  - HTTP-only session cookies with 30-day expiry
+  - Multi-user support with isolated local data per account
+
 - 📅 **Mobile-First Attendance Tracking**:
-  - Quick-mark 4-column status matrix (`Present`, `Absent`, `Late`, `No Class`).
-  - Automatically handles non-conducted statuses (`Medical Leave`, `Holiday`, `No Class`).
-  - **Attendance Target Analyzer**: Calculates the exact number of classes a student can miss or must attend to reach their target percentage (e.g., 75%).
+  - Quick-mark 4-column status matrix (`Present`, `Absent`, `Late`, `No Class`)
+  - Automatically handles non-conducted statuses (`Medical Leave`, `Holiday`, `No Class`)
+  - **Attendance Target Analyzer**: Calculates exact classes to miss/attend to reach target percentage
 
 - 📊 **GPA & CGPA Suite**:
-  - **Semester GPA Calculator**: Grade selection linked to university grade scales (A+, A, A-, B+, etc.).
-  - **Weighted CGPA Overview**: True credit-weighted CGPA calculation across all 8 semesters (not simple GPA averaging).
-  - **Target CGPA Calculator**: Determines required future GPA to reach a target CGPA, with validation for unachievable targets (> 4.00).
+  - **Semester GPA Calculator**: Grade selection linked to university grade scales
+  - **Weighted CGPA Overview**: True credit-weighted CGPA calculation across 8 semesters
+  - **Target CGPA Calculator**: Required future GPA calculation with validation
 
 - 💳 **Fees & Payment Tracker**:
-  - Track semester fees, admission, registration, exam, and lab fees.
-  - Record partial and full payments with date and payment method.
-  - Automatic balance calculation formatted in BDT (`৳`) or configurable currency.
+  - Track semester fees, admission, registration, exam, and lab fees
+  - Record partial and full payments with date and payment method
+  - Automatic balance calculation formatted in BDT (`৳`)
 
 - 🗓️ **Class Routine**:
-  - Weekly schedule organized Saturday to Friday with today's class highlighting and room numbers.
+  - Weekly schedule organized Saturday to Friday with today's class highlighting
 
 - 📝 **Assignments & Exam Deadlines**:
-  - Assignment tracking with priority tags (`High`, `Medium`, `Low`), status toggle, and overdue alerts.
-  - Upcoming exam countdown badges showing remaining days.
+  - Assignment tracking with priority tags and overdue alerts
+  - Upcoming exam countdown badges
 
 - 📓 **Notes & Search**:
-  - Rich study notes linked to subjects with instant full-text search.
+  - Rich study notes linked to subjects with instant full-text search
 
 - 📈 **Analytics & Insights**:
-  - Interactive visual charts powered by Recharts (GPA trend bar chart, attendance pie chart, overall degree progress).
+  - Interactive visual charts powered by Recharts
 
 - 📁 **Lab Projects & Coursework Archive**:
-  - Standalone section inspired by academic repositories to organize experiments, lab reports, source code, tags, and demo URLs.
+  - Organize experiments, lab reports, source code, tags, and demo URLs
 
 - 🔒 **Offline-First & Privacy-Focused**:
-  - Built with Dexie.js (IndexedDB). **100% client-side storage** — no cloud server required, no data leaves your device.
-  - Full JSON backup export and restore capabilities for data safety.
+  - Built with Dexie.js (IndexedDB) — **100% client-side academic data storage**
+  - Full JSON backup export and restore capabilities
+  - Server only stores authentication credentials (never academic data)
 
 - 📱 **Progressive Web App (PWA)**:
-  - Installable on mobile and desktop devices with offline service worker support.
+  - Installable on mobile and desktop devices with offline service worker support
+
+- 🤖 **Android App (Capacitor)**:
+  - Ready for APK generation and Google Play Store publication
 
 ---
 
@@ -58,9 +70,13 @@ A complete, production-ready, offline-first Progressive Web App (PWA) built for 
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/), `next-themes` (Dark / Light / System mode)
 - **UI Components**: [shadcn/ui](https://ui.shadcn.com/) (Radix Primitives, Lucide Icons, Sonner Toasts)
-- **Database**: [Dexie.js](https://dexie.org/) (IndexedDB wrapper with live query hooks)
+- **Client Database**: [Dexie.js](https://dexie.org/) (IndexedDB wrapper with live query hooks)
+- **Server Database**: [Neon PostgreSQL](https://neon.tech/) (authentication data only)
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team/) (type-safe SQL)
+- **Auth**: bcryptjs + HTTP-only session cookies
 - **Charts**: [Recharts](https://recharts.org/)
 - **Forms & Validation**: `react-hook-form` + `zod`
+- **Mobile**: [Capacitor](https://capacitorjs.com/) (Android)
 
 ---
 
@@ -69,13 +85,14 @@ A complete, production-ready, offline-first Progressive Web App (PWA) built for 
 ### Prerequisites
 
 - Node.js 18+ or Bun 1.0+
+- A [Neon](https://neon.tech) PostgreSQL database (free tier)
 
 ### Installation
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/student-academic-dashboard.git
-   cd student-academic-dashboard
+   git clone https://github.com/MehediHasanTsx/Student-Academic-Dashboard.git
+   cd Student-Academic-Dashboard
    ```
 
 2. **Install dependencies**:
@@ -85,31 +102,64 @@ A complete, production-ready, offline-first Progressive Web App (PWA) built for 
    npm install
    ```
 
-3. **Run the development server**:
+3. **Set up environment variables**:
+   Create a `.env.local` file:
+   ```env
+   DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+   ```
+
+4. **Push database schema**:
+   ```bash
+   bunx drizzle-kit push
+   ```
+
+5. **Run the development server**:
    ```bash
    bun run dev
    # or
    npm run dev
    ```
 
-4. **Open the application**:
+6. **Open the application**:
    Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
 ## 🌐 Deploying to Vercel
 
-This application is fully optimized for one-click deployment on [Vercel](https://vercel.com/):
-
 1. Push your repository to GitHub.
 2. Import the project in Vercel.
-3. Keep default settings:
+3. Add the `DATABASE_URL` environment variable (your Neon connection string).
+4. Keep default settings:
    - **Framework Preset**: Next.js
    - **Build Command**: `bun run build` or `npm run build`
    - **Output Directory**: `.next`
-4. Click **Deploy**.
+5. Click **Deploy**.
 
-Because data persistence is handled completely on the client side via IndexedDB, no external database environment variables are required!
+---
+
+## 📱 Android App
+
+See [MOBILE_APP_SETUP.md](MOBILE_APP_SETUP.md) for detailed instructions on:
+- Building the APK
+- Setting up Android Studio
+- Generating a signed AAB for Google Play Store
+
+---
+
+## 🔐 Authentication
+
+See [AUTHENTICATION.md](AUTHENTICATION.md) for detailed documentation on:
+- Registration & login flows
+- Session management
+- Password security
+- Multi-user data isolation
+
+---
+
+## 👨‍💻 Developer
+
+Built by [**mehedihasantsx**](mailto:mehedi.hasan.tsx@gmail.com)
 
 ---
 

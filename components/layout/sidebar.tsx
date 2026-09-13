@@ -76,10 +76,10 @@ export function Sidebar({ onNavigate }: SidebarProps) {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold leading-none tracking-tight text-sidebar-foreground">
-              Academic
+              DCC
             </span>
             <span className="text-[0.65rem] text-muted-foreground leading-tight">
-              Dashboard
+              CSE
             </span>
           </div>
         </Link>
@@ -150,6 +150,19 @@ export function Sidebar({ onNavigate }: SidebarProps) {
           <Settings className="h-4 w-4 shrink-0" />
           <span>Settings</span>
         </Link>
+      </div>
+
+      {/* Developer Credit */}
+      <div className="px-6 pb-3">
+        <p className="text-[0.6rem] text-muted-foreground/60 text-center">
+          Built by{' '}
+          <a
+            href="mailto:mehedi.hasan.tsx@gmail.com"
+            className="underline underline-offset-2 hover:text-muted-foreground transition-colors"
+          >
+            mehedihasantsx
+          </a>
+        </p>
       </div>
     </div>
   );

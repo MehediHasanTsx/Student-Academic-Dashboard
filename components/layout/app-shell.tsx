@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="h-5 w-5" />
           </Button>
           <span className="text-sm font-semibold">
-            Academic Dashboard
+            DCC CSE
           </span>
         </header>
 

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/components/providers/auth-provider';
 import { useProfile } from '@/lib/hooks/useProfile';
 import { settingsService } from '@/lib/services/settings.service';
 import { backupService } from '@/lib/services/backup.service';
@@ -12,15 +14,18 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Settings, Moon, Sun, Monitor, Download, Upload, Trash2, User, GraduationCap, AlertTriangle } from 'lucide-react';
+import { Settings, Moon, Sun, Monitor, Download, Upload, Trash2, User, GraduationCap, AlertTriangle, LogOut, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Settings as SettingsType } from '@/types/database';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { user, logout } = useAuth();
   const { profile } = useProfile();
   const [settings, setSettings] = useState<SettingsType | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -68,6 +73,11 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
+
   const updateSetting = async (key: keyof SettingsType, value: unknown) => {
     await settingsService.update({ [key]: value } as Partial<SettingsType>);
     const updated = await settingsService.get();
@@ -83,6 +93,28 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage your preferences and data</p>
       </div>
+
+      {/* Account */}
+      {user && (
+        <Card>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Shield className="h-4 w-4" />Account</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-muted-foreground">Username:</span> {user.username}</div>
+              <div><span className="text-muted-foreground">Mobile:</span> {user.mobile}</div>
+            </div>
+            <Separator />
+            <Button
+              variant="outline"
+              onClick={() => setLogoutDialogOpen(true)}
+              className="w-full"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Appearance */}
       <Card>
@@ -175,7 +207,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2"><Settings className="h-4 w-4" />Data Management</CardTitle>
-          <CardDescription>Export, import, or reset your data.</CardDescription>
+          <CardDescription>Export, import, or reset your local academic data.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2">
@@ -189,24 +221,47 @@ export default function SettingsPage() {
           </div>
           <Separator />
           <Button variant="destructive" onClick={() => setResetDialogOpen(true)} className="w-full">
-            <Trash2 className="mr-2 h-4 w-4" /> Reset All Data
+            <Trash2 className="mr-2 h-4 w-4" /> Reset Local Data
           </Button>
+          <p className="text-xs text-muted-foreground text-center">
+            This only removes academic data from this device. Your account remains active.
+          </p>
         </CardContent>
       </Card>
 
+      {/* Logout Dialog */}
+      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2"><LogOut className="h-5 w-5" />Logout?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out? Your academic data will remain on this device.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout}>
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Dialog */}
       <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" />Reset Application?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" />Reset Local Data?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete ALL your data including profile, attendance records, grades, notes, and settings.
-              This action CANNOT be undone. Consider exporting a backup first.
+              This will permanently remove all academic data stored on this device — including profile, attendance records, grades, notes, and settings.
+              This action CANNOT be undone. Make sure you have a backup before continuing.
+              Your account will NOT be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleReset} className="bg-destructive text-destructive-foreground">
-              Reset Everything
+              Reset Local Data
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

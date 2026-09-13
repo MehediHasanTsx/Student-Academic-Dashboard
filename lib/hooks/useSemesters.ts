@@ -6,13 +6,13 @@ import type { Semester, Subject } from '@/types/database';
 
 export function useSemesters() {
   const semesters = useLiveQuery(() =>
-    db.semesters.orderBy('number').toArray()
+    db().semesters.orderBy('number').toArray()
   );
   return semesters ?? [];
 }
 
 export function useAllSubjects() {
-  const subjects = useLiveQuery(() => db.subjects.toArray());
+  const subjects = useLiveQuery(() => db().subjects.toArray());
   return subjects ?? [];
 }
 

@@ -37,14 +37,14 @@ export const gpaService = {
    * Get all results for a semester.
    */
   async getResultsBySemester(semesterId: string): Promise<Result[]> {
-    return db.results.where('semesterId').equals(semesterId).toArray();
+    return db().results.where('semesterId').equals(semesterId).toArray();
   },
 
   /**
    * Get all results.
    */
   async getAllResults(): Promise<Result[]> {
-    return db.results.toArray();
+    return db().results.toArray();
   },
 
   /**
@@ -52,7 +52,7 @@ export const gpaService = {
    */
   async saveResult(semesterId: string, data: Omit<Result, 'id' | 'semesterId' | 'createdAt' | 'updatedAt'>): Promise<Result> {
     // Check for existing result for this subject+semester
-    const existing = await db.results
+    const existing = await db().results
       .where('[semesterId+subjectId]')
       .equals([semesterId, data.subjectId])
       .first();
@@ -60,7 +60,7 @@ export const gpaService = {
     const now = new Date();
 
     if (existing) {
-      await db.results.update(existing.id, { ...data, updatedAt: now });
+      await db().results.update(existing.id, { ...data, updatedAt: now });
       return { ...existing, ...data, updatedAt: now };
     }
 
@@ -71,7 +71,7 @@ export const gpaService = {
       createdAt: now,
       updatedAt: now,
     };
-    await db.results.add(result);
+    await db().results.add(result);
     return result;
   },
 
@@ -79,7 +79,7 @@ export const gpaService = {
    * Delete a result.
    */
   async deleteResult(id: string): Promise<void> {
-    await db.results.delete(id);
+    await db().results.delete(id);
   },
 
   /**
@@ -114,8 +114,8 @@ export const gpaService = {
    * NOT the average of semester GPAs.
    */
   async calculateCgpa(): Promise<CgpaResult> {
-    const allResults = await db.results.toArray();
-    const semesters = await db.semesters.toArray();
+    const allResults = await db().results.toArray();
+    const semesters = await db().semesters.toArray();
 
     let totalCredits = 0;
     let totalGradePoints = 0;
@@ -206,17 +206,17 @@ export const gpaService = {
    * Get the grade scale.
    */
   async getGradeScale(): Promise<GradeScale[]> {
-    return db.gradeScale.orderBy('order').toArray();
+    return db().gradeScale.orderBy('order').toArray();
   },
 
   /**
    * Update grade scale.
    */
   async updateGradeScale(grades: Omit<GradeScale, 'id'>[]): Promise<void> {
-    await db.transaction('rw', db.gradeScale, async () => {
-      await db.gradeScale.clear();
+    await db().transaction('rw', db().gradeScale, async () => {
+      await db().gradeScale.clear();
       const items = grades.map((g) => ({ ...g, id: generateId() }));
-      await db.gradeScale.bulkAdd(items);
+      await db().gradeScale.bulkAdd(items);
     });
   },
 
@@ -224,7 +224,7 @@ export const gpaService = {
    * Look up grade point from grade string.
    */
   async getGradePoint(grade: string): Promise<number | undefined> {
-    const scale = await db.gradeScale.where('grade').equals(grade).first();
+    const scale = await db().gradeScale.where('grade').equals(grade).first();
     return scale?.point;
   },
 };

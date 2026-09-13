@@ -7,21 +7,21 @@ export const subjectService = {
    * Get all subjects for a semester.
    */
   async getBySemester(semesterId: string): Promise<Subject[]> {
-    return db.subjects.where('semesterId').equals(semesterId).toArray();
+    return db().subjects.where('semesterId').equals(semesterId).toArray();
   },
 
   /**
    * Get a single subject by ID.
    */
   async getById(id: string): Promise<Subject | undefined> {
-    return db.subjects.get(id);
+    return db().subjects.get(id);
   },
 
   /**
    * Get all subjects across all semesters.
    */
   async getAll(): Promise<Subject[]> {
-    return db.subjects.toArray();
+    return db().subjects.toArray();
   },
 
   /**
@@ -36,7 +36,7 @@ export const subjectService = {
       createdAt: now,
       updatedAt: now,
     };
-    await db.subjects.add(subject);
+    await db().subjects.add(subject);
     return subject;
   },
 
@@ -44,7 +44,7 @@ export const subjectService = {
    * Update a subject.
    */
   async update(id: string, data: Partial<Omit<Subject, 'id' | 'semesterId' | 'createdAt'>>): Promise<void> {
-    await db.subjects.update(id, {
+    await db().subjects.update(id, {
       ...data,
       updatedAt: new Date(),
     });
@@ -54,15 +54,15 @@ export const subjectService = {
    * Delete a subject and all related records.
    */
   async delete(id: string): Promise<void> {
-    await db.transaction('rw', [db.subjects, db.attendance, db.results, db.routine, db.assignments, db.exams, db.notes], async () => {
-      await db.attendance.where('subjectId').equals(id).delete();
-      await db.results.where('subjectId').equals(id).delete();
-      await db.routine.where('subjectId').equals(id).delete();
-      await db.assignments.where('subjectId').equals(id).delete();
-      await db.exams.where('subjectId').equals(id).delete();
+    await db().transaction('rw', [db().subjects, db().attendance, db().results, db().routine, db().assignments, db().exams, db().notes], async () => {
+      await db().attendance.where('subjectId').equals(id).delete();
+      await db().results.where('subjectId').equals(id).delete();
+      await db().routine.where('subjectId').equals(id).delete();
+      await db().assignments.where('subjectId').equals(id).delete();
+      await db().exams.where('subjectId').equals(id).delete();
       // Unlink notes (don't delete, just remove subject reference)
-      await db.notes.where('subjectId').equals(id).modify({ subjectId: undefined });
-      await db.subjects.delete(id);
+      await db().notes.where('subjectId').equals(id).modify({ subjectId: undefined });
+      await db().subjects.delete(id);
     });
   },
 
@@ -70,6 +70,6 @@ export const subjectService = {
    * Count subjects in a semester.
    */
   async countBySemester(semesterId: string): Promise<number> {
-    return db.subjects.where('semesterId').equals(semesterId).count();
+    return db().subjects.where('semesterId').equals(semesterId).count();
   },
 };

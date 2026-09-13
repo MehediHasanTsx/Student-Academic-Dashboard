@@ -14,7 +14,7 @@ import { GraduationCap } from 'lucide-react';
 
 export function SemesterSwitcher() {
   const { profile, setCurrentSemester } = useProfile();
-  const semesters = useLiveQuery(() => db.semesters.orderBy('number').toArray(), []);
+  const semesters = useLiveQuery(() => db().semesters.orderBy('number').toArray(), []);
 
   if (!semesters || !profile) return null;
 

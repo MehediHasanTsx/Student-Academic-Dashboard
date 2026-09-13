@@ -1,4 +1,4 @@
-const CACHE_NAME = 'academic-dashboard-v1';
+const CACHE_NAME = 'dcc-cse-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
@@ -31,7 +31,23 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
+
+  const url = new URL(event.request.url);
+
+  // Never cache auth API responses — always go to network
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return new Response(JSON.stringify({ error: 'Offline' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      })
+    );
+    return;
+  }
+
+  // Stale-while-revalidate for pages and assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -45,7 +61,16 @@ self.addEventListener('fetch', (event) => {
         }).catch(() => {/* Offline fallback */});
         return cachedResponse;
       }
-      return fetch(event.request).catch(() => {
+      return fetch(event.request).then((networkResponse) => {
+        // Cache successful GET responses for static assets
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
         return caches.match('/');
       });
     })

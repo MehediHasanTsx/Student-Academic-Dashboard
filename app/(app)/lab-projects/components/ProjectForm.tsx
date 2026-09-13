@@ -87,7 +87,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
     if (!newSubjectName.trim() || !formData.semesterId) return;
     const id = uuidv4();
     const now = new Date();
-    await db.subjects.add({
+    await db().subjects.add({
       id,
       semesterId: formData.semesterId,
       name: newSubjectName.trim(),
@@ -125,7 +125,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
       const now = new Date();
       if (mode === 'create') {
         const id = uuidv4();
-        await db.projects.add({
+        await db().projects.add({
           id,
           ...result.data,
           createdAt: now,
@@ -133,7 +133,7 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
         });
         router.push(`/lab-projects/${id}`);
       } else if (project) {
-        await db.projects.update(project.id, {
+        await db().projects.update(project.id, {
           ...result.data,
           updatedAt: now,
         });

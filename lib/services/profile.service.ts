@@ -9,7 +9,7 @@ export const profileService = {
    * Get the student profile. Returns null if no profile exists.
    */
   async get(): Promise<Profile | null> {
-    const profile = await db.profile.get(PROFILE_ID);
+    const profile = await db().profile.get(PROFILE_ID);
     return profile ?? null;
   },
 
@@ -17,7 +17,7 @@ export const profileService = {
    * Check if a profile exists.
    */
   async exists(): Promise<boolean> {
-    const profile = await db.profile.get(PROFILE_ID);
+    const profile = await db().profile.get(PROFILE_ID);
     return !!profile;
   },
 
@@ -32,7 +32,7 @@ export const profileService = {
       createdAt: now,
       updatedAt: now,
     };
-    await db.profile.add(profile);
+    await db().profile.add(profile);
     return profile;
   },
 
@@ -40,7 +40,7 @@ export const profileService = {
    * Update an existing profile.
    */
   async update(data: Partial<Omit<Profile, 'id' | 'createdAt'>>): Promise<void> {
-    await db.profile.update(PROFILE_ID, {
+    await db().profile.update(PROFILE_ID, {
       ...data,
       updatedAt: new Date(),
     });
@@ -50,7 +50,7 @@ export const profileService = {
    * Update the current semester.
    */
   async setCurrentSemester(semester: number): Promise<void> {
-    await db.profile.update(PROFILE_ID, {
+    await db().profile.update(PROFILE_ID, {
       currentSemester: semester,
       updatedAt: new Date(),
     });
@@ -60,7 +60,7 @@ export const profileService = {
    * Update the profile picture (base64 data URL).
    */
   async setProfilePicture(dataUrl: string): Promise<void> {
-    await db.profile.update(PROFILE_ID, {
+    await db().profile.update(PROFILE_ID, {
       profilePicture: dataUrl,
       updatedAt: new Date(),
     });
@@ -70,7 +70,7 @@ export const profileService = {
    * Remove the profile picture.
    */
   async removeProfilePicture(): Promise<void> {
-    await db.profile.update(PROFILE_ID, {
+    await db().profile.update(PROFILE_ID, {
       profilePicture: undefined,
       updatedAt: new Date(),
     });

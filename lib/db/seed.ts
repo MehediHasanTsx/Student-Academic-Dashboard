@@ -21,11 +21,11 @@ export async function seedDatabase(): Promise<void> {
 }
 
 async function seedSemesters(): Promise<void> {
-  const count = await db.semesters.count();
+  const count = await db().semesters.count();
   if (count >= SEMESTER_COUNT) return;
 
   // Clear and re-seed to ensure clean state
-  await db.semesters.clear();
+  await db().semesters.clear();
 
   const semesters = Array.from({ length: SEMESTER_COUNT }, (_, i) => ({
     id: `semester-${i + 1}`,
@@ -33,11 +33,11 @@ async function seedSemesters(): Promise<void> {
     name: `Semester ${i + 1}`,
   }));
 
-  await db.semesters.bulkAdd(semesters);
+  await db().semesters.bulkAdd(semesters);
 }
 
 async function seedGradeScale(): Promise<void> {
-  const count = await db.gradeScale.count();
+  const count = await db().gradeScale.count();
   if (count > 0) return;
 
   const grades = DEFAULT_GRADE_SCALE.map((g) => ({
@@ -45,11 +45,11 @@ async function seedGradeScale(): Promise<void> {
     id: generateId(),
   }));
 
-  await db.gradeScale.bulkAdd(grades);
+  await db().gradeScale.bulkAdd(grades);
 }
 
 async function seedSettings(): Promise<void> {
-  const existing = await db.settings.get('app-settings');
+  const existing = await db().settings.get('app-settings');
   if (existing) return;
 
   const settings: Settings = {
@@ -62,5 +62,5 @@ async function seedSettings(): Promise<void> {
     updatedAt: new Date(),
   };
 
-  await db.settings.add(settings);
+  await db().settings.add(settings);
 }

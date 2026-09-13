@@ -43,7 +43,7 @@ export function ProjectActions({ project }: ProjectActionsProps) {
   const handleDelete = useCallback(async () => {
     setDeleting(true);
     try {
-      await db.projects.delete(project.id);
+      await db().projects.delete(project.id);
       router.push('/lab-projects');
     } catch (err) {
       console.error('Failed to delete project:', err);

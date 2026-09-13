@@ -10,7 +10,7 @@ import { useState } from 'react';
 export function ArchiveView() {
   const semesters = useSemesters();
   const subjects = useAllSubjects();
-  const projects = useLiveQuery(() => db.projects.toArray()) ?? [];
+  const projects = useLiveQuery(() => db().projects.toArray()) ?? [];
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set([1, 2, 3, 4]));
   const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set());
 

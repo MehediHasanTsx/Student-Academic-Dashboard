@@ -21,22 +21,22 @@ export function useProjects(options: UseProjectsOptions = {}) {
 
   const projects = useLiveQuery(
     async () => {
-      let collection = db.projects.toCollection();
+      let collection = db().projects.toCollection();
 
       // Apply indexed filters
       if (subjectId) {
-        collection = db.projects.where('subjectId').equals(subjectId);
+        collection = db().projects.where('subjectId').equals(subjectId);
       } else if (semesterId) {
-        collection = db.projects.where('semesterId').equals(semesterId);
+        collection = db().projects.where('semesterId').equals(semesterId);
       } else if (language) {
-        collection = db.projects.where('language').equals(language);
+        collection = db().projects.where('language').equals(language);
       }
 
       let results = await collection.toArray();
 
       // Filter by year (needs semester lookup)
       if (yearNumber) {
-        const sems = await db.semesters.toArray();
+        const sems = await db().semesters.toArray();
         const semesterIds = sems
           .filter((s) => Math.ceil(s.number / 2) === yearNumber)
           .map((s) => s.id);
@@ -79,7 +79,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
           results.sort((a, b) => a.title.localeCompare(b.title));
           break;
         case 'semester':
-          const sems = await db.semesters.toArray();
+          const sems = await db().semesters.toArray();
           const semOrder = new Map(sems.map((s) => [s.id, s.number]));
           results.sort(
             (a, b) => (semOrder.get(a.semesterId) ?? 0) - (semOrder.get(b.semesterId) ?? 0)
@@ -98,12 +98,12 @@ export function useProjects(options: UseProjectsOptions = {}) {
 export function useProject(id: string) {
   const project = useLiveQuery(() => {
     if (!id) return undefined;
-    return db.projects.get(id);
+    return db().projects.get(id);
   }, [id]);
   return project;
 }
 
 export function useProjectCount() {
-  const count = useLiveQuery(() => db.projects.count());
+  const count = useLiveQuery(() => db().projects.count());
   return count ?? 0;
 }

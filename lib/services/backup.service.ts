@@ -28,7 +28,7 @@ interface BackupData {
 }
 
 const BACKUP_VERSION = 2;
-const APP_NAME = 'student-academic-dashboard';
+const APP_NAME = 'dcc-cse';
 
 /**
  * Basic schema to validate backup file structure before importing.
@@ -65,20 +65,20 @@ export const backupService = {
       gradeScale, fees, payments, routine, assignments,
       exams, notes, settings, projects,
     ] = await Promise.all([
-      db.profile.toArray(),
-      db.semesters.toArray(),
-      db.subjects.toArray(),
-      db.attendance.toArray(),
-      db.results.toArray(),
-      db.gradeScale.toArray(),
-      db.fees.toArray(),
-      db.payments.toArray(),
-      db.routine.toArray(),
-      db.assignments.toArray(),
-      db.exams.toArray(),
-      db.notes.toArray(),
-      db.settings.toArray(),
-      db.projects.toArray(),
+      db().profile.toArray(),
+      db().semesters.toArray(),
+      db().subjects.toArray(),
+      db().attendance.toArray(),
+      db().results.toArray(),
+      db().gradeScale.toArray(),
+      db().fees.toArray(),
+      db().payments.toArray(),
+      db().routine.toArray(),
+      db().assignments.toArray(),
+      db().exams.toArray(),
+      db().notes.toArray(),
+      db().settings.toArray(),
+      db().projects.toArray(),
     ]);
 
     const backup: BackupData = {
@@ -93,7 +93,7 @@ export const backupService = {
     };
 
     const dateStr = format(new Date(), 'yyyy-MM-dd');
-    const filename = `student-academic-backup-${dateStr}.json`;
+    const filename = `dcc-cse-backup-${dateStr}.json`;
     const data = JSON.stringify(backup, null, 2);
 
     return { data, filename };
@@ -121,66 +121,66 @@ export const backupService = {
    * Import a validated backup, replacing all existing data.
    */
   async importBackup(backup: BackupData): Promise<void> {
-    await db.transaction(
+    await db().transaction(
       'rw',
       [
-        db.profile,
-        db.semesters,
-        db.subjects,
-        db.attendance,
-        db.results,
-        db.gradeScale,
-        db.fees,
-        db.payments,
-        db.routine,
-        db.assignments,
-        db.exams,
-        db.notes,
-        db.settings,
-        db.projects,
+        db().profile,
+        db().semesters,
+        db().subjects,
+        db().attendance,
+        db().results,
+        db().gradeScale,
+        db().fees,
+        db().payments,
+        db().routine,
+        db().assignments,
+        db().exams,
+        db().notes,
+        db().settings,
+        db().projects,
       ],
       async () => {
-        await db.profile.clear();
-        if (backup.data.profile.length) await db.profile.bulkAdd(backup.data.profile as never[]);
+        await db().profile.clear();
+        if (backup.data.profile.length) await db().profile.bulkAdd(backup.data.profile as never[]);
 
-        await db.semesters.clear();
-        if (backup.data.semesters.length) await db.semesters.bulkAdd(backup.data.semesters as never[]);
+        await db().semesters.clear();
+        if (backup.data.semesters.length) await db().semesters.bulkAdd(backup.data.semesters as never[]);
 
-        await db.subjects.clear();
-        if (backup.data.subjects.length) await db.subjects.bulkAdd(backup.data.subjects as never[]);
+        await db().subjects.clear();
+        if (backup.data.subjects.length) await db().subjects.bulkAdd(backup.data.subjects as never[]);
 
-        await db.attendance.clear();
-        if (backup.data.attendance.length) await db.attendance.bulkAdd(backup.data.attendance as never[]);
+        await db().attendance.clear();
+        if (backup.data.attendance.length) await db().attendance.bulkAdd(backup.data.attendance as never[]);
 
-        await db.results.clear();
-        if (backup.data.results.length) await db.results.bulkAdd(backup.data.results as never[]);
+        await db().results.clear();
+        if (backup.data.results.length) await db().results.bulkAdd(backup.data.results as never[]);
 
-        await db.gradeScale.clear();
-        if (backup.data.gradeScale.length) await db.gradeScale.bulkAdd(backup.data.gradeScale as never[]);
+        await db().gradeScale.clear();
+        if (backup.data.gradeScale.length) await db().gradeScale.bulkAdd(backup.data.gradeScale as never[]);
 
-        await db.fees.clear();
-        if (backup.data.fees.length) await db.fees.bulkAdd(backup.data.fees as never[]);
+        await db().fees.clear();
+        if (backup.data.fees.length) await db().fees.bulkAdd(backup.data.fees as never[]);
 
-        await db.payments.clear();
-        if (backup.data.payments.length) await db.payments.bulkAdd(backup.data.payments as never[]);
+        await db().payments.clear();
+        if (backup.data.payments.length) await db().payments.bulkAdd(backup.data.payments as never[]);
 
-        await db.routine.clear();
-        if (backup.data.routine.length) await db.routine.bulkAdd(backup.data.routine as never[]);
+        await db().routine.clear();
+        if (backup.data.routine.length) await db().routine.bulkAdd(backup.data.routine as never[]);
 
-        await db.assignments.clear();
-        if (backup.data.assignments.length) await db.assignments.bulkAdd(backup.data.assignments as never[]);
+        await db().assignments.clear();
+        if (backup.data.assignments.length) await db().assignments.bulkAdd(backup.data.assignments as never[]);
 
-        await db.exams.clear();
-        if (backup.data.exams.length) await db.exams.bulkAdd(backup.data.exams as never[]);
+        await db().exams.clear();
+        if (backup.data.exams.length) await db().exams.bulkAdd(backup.data.exams as never[]);
 
-        await db.notes.clear();
-        if (backup.data.notes.length) await db.notes.bulkAdd(backup.data.notes as never[]);
+        await db().notes.clear();
+        if (backup.data.notes.length) await db().notes.bulkAdd(backup.data.notes as never[]);
 
-        await db.settings.clear();
-        if (backup.data.settings.length) await db.settings.bulkAdd(backup.data.settings as never[]);
+        await db().settings.clear();
+        if (backup.data.settings.length) await db().settings.bulkAdd(backup.data.settings as never[]);
 
-        await db.projects.clear();
-        if (backup.data.projects.length) await db.projects.bulkAdd(backup.data.projects as never[]);
+        await db().projects.clear();
+        if (backup.data.projects.length) await db().projects.bulkAdd(backup.data.projects as never[]);
       }
     );
   },
@@ -190,8 +190,8 @@ export const backupService = {
    */
   async exportAttendanceCsv(semesterId: string): Promise<string> {
     const [attendance, subjects] = await Promise.all([
-      db.attendance.where('semesterId').equals(semesterId).toArray(),
-      db.subjects.where('semesterId').equals(semesterId).toArray(),
+      db().attendance.where('semesterId').equals(semesterId).toArray(),
+      db().subjects.where('semesterId').equals(semesterId).toArray(),
     ]);
 
     const subjectMap = new Map(subjects.map(s => [s.id, s.name]));
@@ -208,7 +208,7 @@ export const backupService = {
    * Completely reset the application.
    */
   async resetApplication(): Promise<void> {
-    await db.delete();
+    await db().delete();
     window.location.reload();
   },
 

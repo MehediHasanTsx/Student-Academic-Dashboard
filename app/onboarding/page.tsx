@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuth } from '@/components/providers/auth-provider';
 import { profileSchema, type ProfileFormData } from '@/schemas/profile';
 import { profileService } from '@/lib/services/profile.service';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,6 +55,21 @@ export default function OnboardingPage() {
       currentSemester: 1,
     },
   });
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   const steps = [
     {
@@ -128,7 +145,7 @@ export default function OnboardingPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
             <GraduationCap className="h-7 w-7 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Student Academic Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">DCC CSE</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Set up your profile to get started
           </p>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { AuthProvider } from "@/components/providers/auth-provider";
 import { DatabaseProvider } from "@/components/providers/database-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
@@ -20,19 +21,20 @@ import { SwRegister } from "@/components/providers/sw-register";
 
 export const metadata: Metadata = {
   title: {
-    default: "Student Academic Dashboard",
-    template: "%s | Student Academic Dashboard",
+    default: "DCC CSE",
+    template: "%s | DCC CSE",
   },
   description:
-    "Manage your complete academic life — attendance, GPA, fees, routine, assignments, and more. Offline-first, private, and free.",
+    "DCC CSE is a student utility application designed for Dhaka City College CSE students. Track attendance, GPA, fees, routine, and more — offline-first and privacy-focused.",
   manifest: "/manifest.json",
   keywords: [
+    "DCC CSE",
+    "Dhaka City College",
+    "CSE",
     "student dashboard",
-    "academic tracker",
     "attendance tracker",
     "GPA calculator",
     "CGPA calculator",
-    "university",
     "offline",
   ],
 };
@@ -54,13 +56,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full bg-background text-foreground">
+      <body className="min-h-full bg-background text-foreground" suppressHydrationWarning>
         <ThemeProvider>
-          <DatabaseProvider>
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
-          </DatabaseProvider>
+          <AuthProvider>
+            <DatabaseProvider>
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
+            </DatabaseProvider>
+          </AuthProvider>
           <Toaster
             position="bottom-right"
             richColors

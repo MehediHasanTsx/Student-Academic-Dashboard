@@ -28,28 +28,28 @@ export const attendanceService = {
    * Get all attendance records for a semester.
    */
   async getBySemester(semesterId: string): Promise<Attendance[]> {
-    return db.attendance.where('semesterId').equals(semesterId).toArray();
+    return db().attendance.where('semesterId').equals(semesterId).toArray();
   },
 
   /**
    * Get attendance for a specific subject.
    */
   async getBySubject(subjectId: string): Promise<Attendance[]> {
-    return db.attendance.where('subjectId').equals(subjectId).toArray();
+    return db().attendance.where('subjectId').equals(subjectId).toArray();
   },
 
   /**
    * Get attendance for a specific date in a semester.
    */
   async getByDate(semesterId: string, date: string): Promise<Attendance[]> {
-    return db.attendance.where('[semesterId+date]').equals([semesterId, date]).toArray();
+    return db().attendance.where('[semesterId+date]').equals([semesterId, date]).toArray();
   },
 
   /**
    * Get attendance for a date range.
    */
   async getByDateRange(semesterId: string, startDate: string, endDate: string): Promise<Attendance[]> {
-    return db.attendance
+    return db().attendance
       .where('[semesterId+date]')
       .between([semesterId, startDate], [semesterId, endDate], true, true)
       .toArray();
@@ -66,13 +66,13 @@ export const attendanceService = {
     note?: string
   ): Promise<Attendance> {
     // Check if a record already exists for this subject+date
-    const existing = await db.attendance
+    const existing = await db().attendance
       .where('[subjectId+date]')
       .equals([subjectId, date])
       .first();
 
     if (existing) {
-      await db.attendance.update(existing.id, { status, note });
+      await db().attendance.update(existing.id, { status, note });
       return { ...existing, status, note };
     }
 
@@ -85,7 +85,7 @@ export const attendanceService = {
       note,
       createdAt: new Date(),
     };
-    await db.attendance.add(record);
+    await db().attendance.add(record);
     return record;
   },
 
@@ -97,7 +97,7 @@ export const attendanceService = {
     date: string,
     records: Array<{ subjectId: string; status: AttendanceStatus; note?: string }>
   ): Promise<void> {
-    await db.transaction('rw', db.attendance, async () => {
+    await db().transaction('rw', db().attendance, async () => {
       for (const rec of records) {
         await attendanceService.mark(semesterId, rec.subjectId, date, rec.status, rec.note);
       }
@@ -108,7 +108,7 @@ export const attendanceService = {
    * Delete an attendance record.
    */
   async delete(id: string): Promise<void> {
-    await db.attendance.delete(id);
+    await db().attendance.delete(id);
   },
 
   /**
