@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerDb } from '@/lib/db/server/db';
 import { users } from '@/lib/db/server/schema';
 import { normalizeUsername } from '@/lib/auth/validation';
+import { isDemoMode } from '@/lib/auth/demo';
 import { eq } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
+  // In demo mode, all usernames are available
+  if (isDemoMode()) {
+    const { searchParams } = new URL(request.url);
+    const username = searchParams.get('u') || '';
+    return NextResponse.json({
+      available: true,
+      username: normalizeUsername(username),
+    });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get('u');

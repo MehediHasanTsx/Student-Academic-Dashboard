@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { deleteSession } from '@/lib/auth/session';
+import { isDemoMode } from '@/lib/auth/demo';
 
 export async function POST() {
+  // In demo mode, just return success
+  if (isDemoMode()) {
+    return NextResponse.json({ success: true });
+  }
+
   try {
     await deleteSession();
     return NextResponse.json({ success: true });

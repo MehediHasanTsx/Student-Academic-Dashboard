@@ -4,9 +4,15 @@ import { users } from '@/lib/db/server/schema';
 import { hashPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
 import { normalizeUsername, normalizeMobile, isValidBDMobile } from '@/lib/auth/validation';
+import { isDemoMode, DEMO_USER } from '@/lib/auth/demo';
 import { eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
+  // In demo mode, accept any registration
+  if (isDemoMode()) {
+    return NextResponse.json({ user: DEMO_USER }, { status: 201 });
+  }
+
   try {
     const body = await request.json();
     const { username, mobile, password, confirmPassword } = body;

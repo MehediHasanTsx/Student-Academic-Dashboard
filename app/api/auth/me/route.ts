@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth/session';
+import { isDemoMode, DEMO_USER } from '@/lib/auth/demo';
 
 export async function GET() {
+  // In demo mode, always return demo user
+  if (isDemoMode()) {
+    return NextResponse.json({ user: DEMO_USER });
+  }
+
   try {
     const session = await validateSession();
 

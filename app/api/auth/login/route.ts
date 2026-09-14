@@ -4,9 +4,15 @@ import { users } from '@/lib/db/server/schema';
 import { verifyPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
 import { normalizeUsername } from '@/lib/auth/validation';
+import { isDemoMode, DEMO_USER } from '@/lib/auth/demo';
 import { eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
+  // In demo mode, accept any login
+  if (isDemoMode()) {
+    return NextResponse.json({ user: DEMO_USER });
+  }
+
   try {
     const body = await request.json();
     const { username, password } = body;
@@ -29,7 +35,6 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (result.length === 0) {
-      // Generic message to prevent username enumeration
       return NextResponse.json(
         { error: 'Invalid username or password.' },
         { status: 401 }
