@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useRef, useSyncExternal
 import { useAuth } from './auth-provider';
 import { setActiveUser, clearActiveUser } from '@/lib/db/user-db';
 import { seedDatabase } from '@/lib/db/seed';
+import { profileService } from '@/lib/services/profile.service';
 
 interface DatabaseContextValue {
   isReady: boolean;
@@ -27,6 +28,46 @@ function useIsMounted() {
     () => true,   // client
     () => false,   // server
   );
+}
+
+/**
+ * Fetch the user's profile from the server (Neon PostgreSQL) and save it
+ * to IndexedDB. This restores the profile when logging in on a new device.
+ */
+async function syncProfileFromServer(): Promise<void> {
+  // Check if local profile already exists
+  const localProfile = await profileService.exists();
+  if (localProfile) return; // Already have profile locally, no need to fetch
+
+  try {
+    const res = await fetch('/api/profile', { credentials: 'include' });
+    if (!res.ok) return;
+
+    const { profile } = await res.json();
+    if (!profile) return; // No server profile — user needs onboarding
+
+    // Save the server profile to local IndexedDB
+    await profileService.create({
+      fullName: profile.fullName,
+      university: profile.university,
+      department: profile.department,
+      studentId: profile.studentId,
+      rollNumber: profile.rollNumber,
+      registrationNumber: profile.registrationNumber,
+      batch: profile.batch,
+      session: profile.session,
+      phoneNumber: profile.phoneNumber,
+      email: profile.email || undefined,
+      bloodGroup: profile.bloodGroup || undefined,
+      emergencyContact: profile.emergencyContact || undefined,
+      currentSemester: profile.currentSemester,
+    });
+
+    console.log('✅ Profile restored from server');
+  } catch (err) {
+    // Non-critical — user will go through onboarding if this fails
+    console.warn('Could not sync profile from server:', err);
+  }
 }
 
 export function DatabaseProvider({ children }: { children: React.ReactNode }) {
@@ -56,7 +97,10 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
 
     setActiveUser(userId);
     seedDatabase()
-      .then(() => {
+      .then(async () => {
+        if (cancelled) return;
+        // After seeding, restore profile from server if needed
+        await syncProfileFromServer();
         if (!cancelled) {
           setIsReady(true);
           setError(null);

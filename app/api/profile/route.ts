@@ -6,6 +6,61 @@ import { isDemoMode } from '@/lib/auth/demo';
 import { eq } from 'drizzle-orm';
 
 /**
+ * GET /api/profile — Fetch the user's profile from the server.
+ * Used when logging in on a new device to restore profile data.
+ */
+export async function GET() {
+  if (isDemoMode()) {
+    return NextResponse.json({ profile: null });
+  }
+
+  try {
+    const session = await validateSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const db = getServerDb();
+    const userId = session.user.id;
+
+    const result = await db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.userId, userId))
+      .limit(1);
+
+    if (result.length === 0) {
+      return NextResponse.json({ profile: null });
+    }
+
+    const p = result[0];
+    return NextResponse.json({
+      profile: {
+        fullName: p.fullName,
+        university: p.university,
+        department: p.department,
+        studentId: p.studentId,
+        rollNumber: p.rollNumber,
+        registrationNumber: p.registrationNumber,
+        batch: p.batch,
+        session: p.session,
+        phoneNumber: p.phoneNumber,
+        email: p.email || '',
+        bloodGroup: p.bloodGroup || '',
+        emergencyContact: p.emergencyContact || '',
+        currentSemester: p.currentSemester,
+      },
+    });
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch profile.' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * POST /api/profile — Save or update the user's profile on the server.
  * This syncs onboarding data so the admin can view user details in Neon.
  */
