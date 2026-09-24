@@ -124,6 +124,14 @@ export default function OnboardingPage() {
         emergencyContact: data.emergencyContact || undefined,
         currentSemester: data.currentSemester,
       });
+
+      // Sync profile to server (fire-and-forget for admin visibility)
+      fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }).catch(() => {/* Server sync is best-effort */});
+
       toast.success('Profile created successfully!');
       router.replace('/');
     } catch (err) {

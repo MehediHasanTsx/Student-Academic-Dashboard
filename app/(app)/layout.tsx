@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useDatabaseReady } from '@/components/providers/database-provider';
 import { profileService } from '@/lib/services/profile.service';
 import { AppShell } from '@/components/layout/app-shell';
 
@@ -14,6 +15,7 @@ function useIsMounted() {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isReady: dbReady } = useDatabaseReady();
   const [ready, setReady] = useState(false);
   const isMounted = useIsMounted();
 
@@ -25,6 +27,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Wait for database to be ready before accessing it
+    if (!dbReady) return;
+
     profileService.exists().then((exists) => {
       if (!exists) {
         router.replace('/onboarding');
@@ -32,14 +37,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         setReady(true);
       }
     });
-  }, [router, authLoading, isAuthenticated, isMounted]);
+  }, [router, authLoading, isAuthenticated, isMounted, dbReady]);
 
   // During SSR / hydration, render children to avoid mismatch
   if (!isMounted) {
     return <>{children}</>;
   }
 
-  if (authLoading || !ready) {
+  if (authLoading || !dbReady || !ready) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
