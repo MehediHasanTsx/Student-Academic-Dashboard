@@ -116,6 +116,13 @@ export function clearActiveUser(): void {
 }
 
 /**
+ * Check if a user database is currently active.
+ */
+export function hasActiveDb(): boolean {
+  return _activeDb !== null;
+}
+
+/**
  * Get the currently active user's database.
  * Throws if no user is active (should only be called within authenticated context).
  */
