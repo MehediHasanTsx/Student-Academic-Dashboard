@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, integer, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, integer, timestamp, index, jsonb } from 'drizzle-orm/pg-core';
 
 // ── Users Table ──────────────────────────────────────
 export const users = pgTable('users', {
@@ -52,6 +52,18 @@ export const profiles = pgTable('profiles', {
   index('idx_profiles_user_id').on(table.userId),
 ]);
 
+// ── User Data Table ──────────────────────────────────
+// Stores a full JSON blob of all user data for cross-device sync.
+// Each user has one row; data is overwritten on each sync.
+export const userData = pgTable('user_data', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  data: jsonb('data').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_user_data_user_id').on(table.userId),
+]);
+
 // ── Type Exports ─────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -59,4 +71,6 @@ export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
+export type UserData = typeof userData.$inferSelect;
+export type NewUserData = typeof userData.$inferInsert;
 

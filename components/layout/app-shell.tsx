@@ -2,12 +2,16 @@
 
 import { useState } from 'react';
 import { Sidebar } from './sidebar';
+import { useCloudSync } from '@/lib/hooks/useCloudSync';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Auto-sync all data to cloud whenever IndexedDB changes
+  useCloudSync();
 
   return (
     <div className="flex h-screen overflow-hidden">

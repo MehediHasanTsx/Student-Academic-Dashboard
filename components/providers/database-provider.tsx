@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useRef, useSyncExternal
 import { useAuth } from './auth-provider';
 import { setActiveUser, clearActiveUser } from '@/lib/db/user-db';
 import { seedDatabase } from '@/lib/db/seed';
+import { cloudSyncService } from '@/lib/services/cloud-sync.service';
 import { profileService } from '@/lib/services/profile.service';
 
 interface DatabaseContextValue {
@@ -31,42 +32,47 @@ function useIsMounted() {
 }
 
 /**
- * Fetch the user's profile from the server (Neon PostgreSQL) and save it
- * to IndexedDB. This restores the profile when logging in on a new device.
+ * On login, restore all data from the server if the local database is empty.
+ * This handles the "new device" case — downloads everything from cloud.
  */
-async function syncProfileFromServer(): Promise<void> {
-  // Check if local profile already exists
-  const localProfile = await profileService.exists();
-  if (localProfile) return; // Already have profile locally, no need to fetch
+async function restoreFromCloud(): Promise<void> {
+  // Check if local data already exists (profile is a good indicator)
+  const hasLocalProfile = await profileService.exists();
+  if (hasLocalProfile) return; // Already have data locally
 
-  try {
-    const res = await fetch('/api/profile', { credentials: 'include' });
-    if (!res.ok) return;
+  // Try downloading everything from cloud
+  const restored = await cloudSyncService.downloadFromServer();
 
-    const { profile } = await res.json();
-    if (!profile) return; // No server profile — user needs onboarding
+  if (!restored) {
+    // No cloud data either — try fetching just the profile from /api/profile
+    // (for users who created their account before cloud sync existed)
+    try {
+      const res = await fetch('/api/profile', { credentials: 'include' });
+      if (!res.ok) return;
 
-    // Save the server profile to local IndexedDB
-    await profileService.create({
-      fullName: profile.fullName,
-      university: profile.university,
-      department: profile.department,
-      studentId: profile.studentId,
-      rollNumber: profile.rollNumber,
-      registrationNumber: profile.registrationNumber,
-      batch: profile.batch,
-      session: profile.session,
-      phoneNumber: profile.phoneNumber,
-      email: profile.email || undefined,
-      bloodGroup: profile.bloodGroup || undefined,
-      emergencyContact: profile.emergencyContact || undefined,
-      currentSemester: profile.currentSemester,
-    });
+      const { profile } = await res.json();
+      if (!profile) return; // No server profile — user needs onboarding
 
-    console.log('✅ Profile restored from server');
-  } catch (err) {
-    // Non-critical — user will go through onboarding if this fails
-    console.warn('Could not sync profile from server:', err);
+      await profileService.create({
+        fullName: profile.fullName,
+        university: profile.university,
+        department: profile.department,
+        studentId: profile.studentId,
+        rollNumber: profile.rollNumber,
+        registrationNumber: profile.registrationNumber,
+        batch: profile.batch,
+        session: profile.session,
+        phoneNumber: profile.phoneNumber,
+        email: profile.email || undefined,
+        bloodGroup: profile.bloodGroup || undefined,
+        emergencyContact: profile.emergencyContact || undefined,
+        currentSemester: profile.currentSemester,
+      });
+
+      console.log('✅ Profile restored from server (legacy)');
+    } catch (err) {
+      console.warn('Could not sync profile from server:', err);
+    }
   }
 }
 
@@ -89,6 +95,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
 
     if (!userId) {
       clearActiveUser();
+      cloudSyncService.cancelPendingUpload();
       setTimeout(() => { if (!cancelled) setIsReady(true); }, 0);
       return () => { cancelled = true; };
     }
@@ -99,8 +106,8 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
     seedDatabase()
       .then(async () => {
         if (cancelled) return;
-        // After seeding, restore profile from server if needed
-        await syncProfileFromServer();
+        // After seeding, restore all data from cloud if local is empty
+        await restoreFromCloud();
         if (!cancelled) {
           setIsReady(true);
           setError(null);
