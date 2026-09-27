@@ -81,13 +81,15 @@ export async function POST(request: NextRequest) {
       .where(eq(userData.userId, userId))
       .limit(1);
 
+    const now = new Date();
+
     if (existing.length > 0) {
       // Update existing data
       await db
         .update(userData)
         .set({
           data,
-          updatedAt: new Date(),
+          updatedAt: now,
         })
         .where(eq(userData.userId, userId));
     } else {
@@ -98,7 +100,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, updatedAt: now.toISOString() });
   } catch (error) {
     console.error('Sync upload error:', error);
     return NextResponse.json(

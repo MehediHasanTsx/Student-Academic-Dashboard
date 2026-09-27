@@ -8,8 +8,8 @@ import { db } from '@/lib/db/database';
 import { hasActiveDb } from '@/lib/db/user-db';
 
 /**
- * Hook that auto-syncs data to the cloud after any IndexedDB change.
- * Uses Dexie's observable hooks to detect changes across all tables.
+ * Hook that auto-syncs data to the cloud after any IndexedDB change,
+ * and refreshes from the server when the tab regains focus (multi-device sync).
  *
  * Place this in the app shell so it runs while the user is authenticated.
  */
@@ -18,6 +18,7 @@ export function useCloudSync() {
   const { isAuthenticated } = useAuth();
   const initialSyncDone = useRef(false);
 
+  // ── Initial upload after first load ──────────────────
   useEffect(() => {
     if (!isReady || !isAuthenticated || !hasActiveDb()) return;
 
@@ -32,19 +33,21 @@ export function useCloudSync() {
     }
   }, [isReady, isAuthenticated]);
 
+  // ── Watch ALL table changes via Dexie hooks ──────────
   useEffect(() => {
     if (!isReady || !isAuthenticated || !hasActiveDb()) return;
 
     // Subscribe to all table changes using Dexie's hooks
     const database = db();
     const tables = [
-      database.profile, database.subjects, database.attendance,
-      database.results, database.fees, database.payments,
-      database.routine, database.assignments, database.exams,
-      database.notes, database.settings, database.projects,
+      database.profile, database.semesters, database.subjects,
+      database.attendance, database.results, database.gradeScale,
+      database.fees, database.payments, database.routine,
+      database.assignments, database.exams, database.notes,
+      database.settings, database.projects,
     ];
 
-    // Dexie fires 'changes' events on the database when tables are modified
+    // Dexie fires hook events when tables are modified
     const handleChange = () => {
       cloudSyncService.scheduleUpload();
     };
@@ -68,5 +71,27 @@ export function useCloudSync() {
         unsub();
       }
     };
+  }, [isReady, isAuthenticated]);
+
+  // ── Multi-device sync: visibility change ─────────────
+  // When user leaves the tab → flush pending uploads immediately
+  // When user returns to the tab → download latest from server
+  useEffect(() => {
+    if (!isReady || !isAuthenticated || !hasActiveDb()) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // User is leaving this tab — flush any pending upload immediately
+        // so other devices can see the latest data
+        void cloudSyncService.flushPendingUpload();
+      } else if (document.visibilityState === 'visible') {
+        // User returned to this tab — check if another device made changes
+        // Uses timestamp comparison to skip redundant downloads
+        void cloudSyncService.refreshFromServer();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isReady, isAuthenticated]);
 }

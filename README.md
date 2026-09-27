@@ -133,7 +133,7 @@ The app runs in **demo mode** by default (no database setup required). To enable
 
 ## 👨‍💻 Developer
 
-Built with ❤️ by [**mehedihasantsx**](https://api.whatsapp.com/send/?phone=8801521743944&text&type=phone_number&app_absent=0)
+Built with ❤️ by [**Mehedi Hasan**](https://api.whatsapp.com/send/?phone=8801521743944&text&type=phone_number&app_absent=0)
 
 ---
 

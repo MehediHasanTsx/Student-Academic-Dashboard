@@ -1,8 +1,8 @@
 # 📱 DCC CSE — User Guide
 
-## এটা কী? (What is this?)
+## What is this?
 
-**DCC CSE** হলো Dhaka City College CSE Department-এর students-দের জন্য তৈরি একটি **academic management app**। এই app দিয়ে তুমি তোমার পুরো academic life manage করতে পারবে — attendance tracking, GPA calculation, fees management, class routine, assignments, notes — সব একটা dashboard থেকে।
+**DCC CSE** is an academic management app built for the students of Dhaka City College, CSE Department. With this app, you can manage your entire academic life from a single dashboard — attendance tracking, GPA calculation, fees management, class routine, assignments, notes, and more.
 
 🔗 **App Link:** [https://dcc-cse-25.vercel.app](https://dcc-cse-25.vercel.app)
 
@@ -121,23 +121,34 @@ After installing, the app:
 
 | Question | Answer |
 |---|---|
-| Who can see my grades? | **Only you.** Your academic data is stored on your phone, not on any server. |
-| What does the server store? | Only your **username, mobile number, and encrypted password** (for login). |
-| Can the admin see my attendance/GPA? | **No.** Academic data never leaves your device. |
-| What if I clear my browser data? | You'll lose your local data. **Use the backup feature** in Settings to export your data first. |
-| Can I use it on multiple devices? | Yes — log in on any device. But your academic data is per-device. Use **Backup & Restore** to transfer between devices. |
+| Who can see my grades? | **Only you.** Your academic data is encrypted and tied to your account. |
+| What does the server store? | Your **login info** (encrypted password) and your **academic data** (synced securely for cross-device access). |
+| Can the admin see my attendance/GPA? | **No.** Your academic data is private to your account. |
+| What if I clear my browser data? | **No problem!** Just log in again and all your data will be automatically restored from the cloud. You can also use **Export Backup** in Settings as extra safety. |
+| Can I use it on multiple devices? | **Yes!** Log in on any device — your data syncs automatically across all devices. Edit on phone, see it on laptop. |
 
 ---
 
-## 💾 Backup & Restore Your Data
+## ☁️ Cloud Sync (Automatic)
 
-Since your academic data is stored locally, it's important to **back it up** occasionally:
+Your data **automatically syncs** to the cloud whenever you make any changes:
+
+- ✅ **Add/edit/delete** anything → synced to cloud within 3 seconds
+- ✅ **Switch tabs or close the app** → any pending changes are saved immediately
+- ✅ **Log in on another device** → all your data appears automatically
+- ✅ **Return to the app after using another device** → latest changes are pulled in
+
+> You don't need to do anything — sync is fully automatic!
+
+## 💾 Manual Backup (Optional Extra Safety)
+
+Cloud sync handles everything, but you can also keep a local backup file:
 
 1. Go to **Settings** (⚙️ in the sidebar)
 2. Tap **Export Backup** — this downloads a `.json` file with all your data
-3. Keep this file safe (in your Google Drive, WhatsApp, etc.)
+3. Keep this file safe (in Google Drive, WhatsApp, etc.)
 
-To restore on a new device or after clearing data:
+To restore from a backup file:
 1. Go to **Settings** → **Import Backup**
 2. Select your `.json` backup file
 3. ✅ All your data is restored!
@@ -178,16 +189,22 @@ Change it in **Settings** or the theme toggle in the sidebar.
 ## ❓ FAQ
 
 **Q: Do I need internet to use the app?**
-A: Only for **login/registration**. After that, the app works **offline**. Your data is stored locally.
+A: You need internet for **login, registration, and syncing data**. The app can also work **offline** — your changes will sync when you're back online.
 
 **Q: Can I use it on laptop/desktop?**
-A: Yes! Open the same link in any browser on your laptop. It works on all devices.
+A: Yes! Open the same link in any browser on your laptop. All your data syncs automatically between devices.
+
+**Q: Can I use it on multiple devices at the same time?**
+A: Yes! Log in on your phone, laptop, tablet — all at the same time. Changes made on one device will appear on the other when you switch back or reload.
 
 **Q: My friend wants to use the app on my phone. Is that possible?**
 A: Yes! Each account has **separate, isolated data**. Your friend can log out, create their own account, and their data will be completely separate from yours.
 
 **Q: I forgot my password. What do I do?**
 A: Contact the developer (link below). Currently there's no self-service password reset.
+
+**Q: What if I clear my browser data or uninstall the app?**
+A: **No problem!** Just log in again and all your data will be restored from the cloud automatically.
 
 **Q: The app is not loading / showing errors.**
 A: Try these:
@@ -199,7 +216,7 @@ A: Try these:
 
 ## 👨‍💻 Developer
 
-Built with ❤️ by **mehedihasantsx**
+Built with ❤️ by **Mehedi Hasan**
 
 📱 Contact: [WhatsApp](https://api.whatsapp.com/send/?phone=8801521743944&text&type=phone_number&app_absent=0)
 

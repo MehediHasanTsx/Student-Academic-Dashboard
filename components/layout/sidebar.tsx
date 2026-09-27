@@ -162,7 +162,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             rel="noopener noreferrer"
             className="underline underline-offset-2 hover:text-muted-foreground transition-colors"
           >
-            mehedihasantsx
+            Mehedi Hasan
           </a>
         </p>
       </div>
