@@ -4,6 +4,7 @@ import { pgTable, uuid, varchar, integer, timestamp, index, jsonb } from 'drizzl
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   username: varchar('username', { length: 30 }).notNull().unique(),
+  email: varchar('email', { length: 200 }).unique(),
   mobile: varchar('mobile', { length: 20 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   role: varchar('role', { length: 20 }).notNull().default('student'),
@@ -11,6 +12,7 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_users_username').on(table.username),
+  index('idx_users_email').on(table.email),
   index('idx_users_mobile').on(table.mobile),
 ]);
 
@@ -77,6 +79,24 @@ export const mainData = pgTable('main_data', {
   updatedBy: uuid('updated_by').references(() => users.id),
 });
 
+// ── Password Reset OTPs Table ────────────────────────
+// Secure hashed OTPs for email password recovery
+export const passwordResetOtps = pgTable('password_reset_otps', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  otpHash: varchar('otp_hash', { length: 255 }).notNull(),
+  resetToken: varchar('reset_token', { length: 255 }).unique(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  attempts: integer('attempts').notNull().default(0),
+  maxAttempts: integer('max_attempts').notNull().default(5),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('idx_reset_otps_user_id').on(table.userId),
+  index('idx_reset_otps_reset_token').on(table.resetToken),
+  index('idx_reset_otps_expires_at').on(table.expiresAt),
+]);
+
 // ── Type Exports ─────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -88,4 +108,6 @@ export type UserData = typeof userData.$inferSelect;
 export type NewUserData = typeof userData.$inferInsert;
 export type MainDataRecord = typeof mainData.$inferSelect;
 export type NewMainDataRecord = typeof mainData.$inferInsert;
+export type PasswordResetOtp = typeof passwordResetOtps.$inferSelect;
+export type NewPasswordResetOtp = typeof passwordResetOtps.$inferInsert;
 

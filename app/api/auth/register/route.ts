@@ -3,7 +3,7 @@ import { getServerDb } from '@/lib/db/server/db';
 import { users } from '@/lib/db/server/schema';
 import { hashPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
-import { normalizeUsername, normalizeMobile, isValidBDMobile } from '@/lib/auth/validation';
+import { normalizeUsername, normalizeMobile, isValidBDMobile, normalizeEmail, isValidEmail } from '@/lib/auth/validation';
 import { isDemoMode, DEMO_USER } from '@/lib/auth/demo';
 import { eq } from 'drizzle-orm';
 
@@ -15,10 +15,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { username, mobile, password, confirmPassword } = body;
+    const { username, email, mobile, password, confirmPassword } = body;
 
     // ── Validate required fields ──────────────────────
-    if (!username || !mobile || !password || !confirmPassword) {
+    if (!username || !email || !mobile || !password || !confirmPassword) {
       return NextResponse.json(
         { error: 'All fields are required.' },
         { status: 400 }
@@ -63,6 +63,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Normalize email ──────────────────────────────
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!isValidEmail(normalizedEmail)) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address.' },
+        { status: 400 }
+      );
+    }
+
+    if (normalizedEmail.length > 200) {
+      return NextResponse.json(
+        { error: 'Email must be at most 200 characters.' },
+        { status: 400 }
+      );
+    }
+
     // ── Normalize mobile ─────────────────────────────
     const normalizedMobile = normalizeMobile(mobile);
 
@@ -89,6 +106,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const existingEmail = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
+      .limit(1);
+
+    if (existingEmail.length > 0) {
+      return NextResponse.json(
+        { error: 'An account with this email address already exists.' },
+        { status: 409 }
+      );
+    }
+
     const existingMobile = await db
       .select({ id: users.id })
       .from(users)
@@ -109,6 +139,7 @@ export async function POST(request: NextRequest) {
       .insert(users)
       .values({
         username: normalizedUsername,
+        email: normalizedEmail,
         mobile: normalizedMobile,
         passwordHash,
         role: 'student',
@@ -116,6 +147,7 @@ export async function POST(request: NextRequest) {
       .returning({
         id: users.id,
         username: users.username,
+        email: users.email,
         mobile: users.mobile,
         role: users.role,
       });
@@ -129,6 +161,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: newUser.id,
           username: newUser.username,
+          email: newUser.email,
           mobile: newUser.mobile,
           role: 'student' as const,
         },

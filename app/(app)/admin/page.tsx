@@ -262,7 +262,7 @@ export default function AdminPage() {
             <div className="flex items-center gap-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Semester:</Label>
               <Select value={selectedSemester} onValueChange={(v) => { if (v) setSelectedSemester(v); }}>
-                <SelectTrigger className="w-[120px] h-9">
+                <SelectTrigger className="w-30 h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

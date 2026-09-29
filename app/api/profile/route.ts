@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerDb } from '@/lib/db/server/db';
-import { profiles } from '@/lib/db/server/schema';
+import { profiles, users } from '@/lib/db/server/schema';
 import { validateSession } from '@/lib/auth/session';
 import { isDemoMode } from '@/lib/auth/demo';
-import { eq } from 'drizzle-orm';
+import { normalizeEmail, isValidEmail } from '@/lib/auth/validation';
+import { eq, and, ne } from 'drizzle-orm';
 
 /**
  * GET /api/profile — Fetch the user's profile from the server.
@@ -138,6 +139,24 @@ export async function POST(request: NextRequest) {
         emergencyContact: emergencyContact || null,
         currentSemester: currentSemester || 1,
       });
+    }
+
+    // Also sync email to users table for password recovery if valid
+    if (email && typeof email === 'string' && isValidEmail(email)) {
+      const normalizedEmail = normalizeEmail(email);
+      // Ensure email isn't taken by another account
+      const conflicting = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.email, normalizedEmail), ne(users.id, userId)))
+        .limit(1);
+
+      if (conflicting.length === 0) {
+        await db
+          .update(users)
+          .set({ email: normalizedEmail, updatedAt: new Date() })
+          .where(eq(users.id, userId));
+      }
     }
 
     return NextResponse.json({ success: true });

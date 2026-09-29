@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const { register } = useAuth();
 
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -80,6 +81,10 @@ export default function RegisterPage() {
       setError('Username can only contain letters, numbers, and underscores.');
       return;
     }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Please enter a valid email address for password recovery.');
+      return;
+    }
     if (!mobile.trim()) {
       setError('Mobile number is required.');
       return;
@@ -97,6 +102,7 @@ export default function RegisterPage() {
     try {
       const result = await register({
         username,
+        email: email.trim(),
         mobile,
         password,
         confirmPassword,
@@ -180,6 +186,23 @@ export default function RegisterPage() {
                 )}
                 <p className="text-xs text-muted-foreground">
                   3–30 characters. Letters, numbers, and underscores only.
+                </p>
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="reg-email">Email Address</Label>
+                <Input
+                  id="reg-email"
+                  type="email"
+                  placeholder="student@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Used for password recovery and account security.
                 </p>
               </div>
 
@@ -283,7 +306,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Credential Reminder Modal */}
-      <AlertDialog open={showSuccessModal} onOpenChange={() => {}}>
+      <AlertDialog open={showSuccessModal} onOpenChange={() => { }}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
