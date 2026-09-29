@@ -385,7 +385,7 @@ function SubjectForm({
                 key={c}
                 type="button"
                 className={`h-6 w-6 rounded-full border-2 transition-all ${
-                // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern
+                 
                   watch('color') === c ? 'border-foreground scale-110' : 'border-transparent'
                 }`}
                 style={{ backgroundColor: c }}

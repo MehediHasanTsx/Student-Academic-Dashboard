@@ -280,7 +280,6 @@ function RoutineForm({
         <DialogDescription>{slot ? 'Update scheduled class timing or room.' : 'Add a class to the weekly routine.'}</DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-4">
-        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
         <div className="space-y-2">
           <Label>Subject *</Label>
           <Select value={watch('subjectId')} onValueChange={(v) => { if (v) setValue('subjectId', v); }}>

@@ -139,7 +139,7 @@ function ExamForm({ subjects, onSubmit, onCancel }: { subjects: { id: string; na
       <DialogHeader><DialogTitle>Add Exam</DialogTitle><DialogDescription>Schedule an upcoming exam.</DialogDescription></DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2"><Label>Exam Name *</Label><Input placeholder="e.g. Mid-term" {...register('name')} />{errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}</div>
-        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
+        { }
         <div className="space-y-2"><Label>Subject *</Label><Select value={watch('subjectId')} onValueChange={(v) => { if (v) setValue('subjectId', v); }}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Date *</Label><Input type="date" {...register('date')} />{errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}</div>

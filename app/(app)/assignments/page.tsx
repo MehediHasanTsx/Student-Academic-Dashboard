@@ -129,7 +129,7 @@ function AssignmentForm({ subjects, onSubmit, onCancel }: { subjects: { id: stri
       <DialogHeader><DialogTitle>Add Assignment</DialogTitle><DialogDescription>Add a new assignment to track.</DialogDescription></DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2"><Label>Title *</Label><Input placeholder="Assignment title" {...register('title')} />{errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}</div>
-        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
+        { }
         <div className="space-y-2"><Label>Subject *</Label><Select value={watch('subjectId')} onValueChange={(v) => { if (v) setValue('subjectId', v); }}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>{errors.subjectId && <p className="text-xs text-destructive">{errors.subjectId.message}</p>}</div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Deadline *</Label><Input type="datetime-local" {...register('deadline')} />{errors.deadline && <p className="text-xs text-destructive">{errors.deadline.message}</p>}</div>

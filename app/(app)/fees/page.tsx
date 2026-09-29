@@ -460,7 +460,6 @@ function FeeForm({
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-4">
-        {/* eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern */}
         <div className="space-y-2">
           <Label>Fee Type *</Label>
           <Select value={watch('type')} onValueChange={(v) => { if (v) setValue('type', v as FeeType); }}>

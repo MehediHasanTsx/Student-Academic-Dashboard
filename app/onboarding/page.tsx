@@ -142,7 +142,7 @@ export default function OnboardingPage() {
     }
   };
 
-  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form watch() pattern
+   
   const currentSemester = watch('currentSemester');
 
   return (
