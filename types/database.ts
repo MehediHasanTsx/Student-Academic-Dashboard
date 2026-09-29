@@ -213,3 +213,17 @@ export interface MetaRecord {
   id: string;
   value: string;
 }
+
+// ── User Role ─────────────────────────────────────────
+export type UserRole = 'admin' | 'student';
+
+// ── Main / Shared Data (Admin-Maintained) ─────────────
+export interface MainData {
+  id: string; // e.g. 'semester-5'
+  semesterId: string;
+  subjects: Subject[];
+  routine: RoutineSlot[];
+  exams: Exam[];
+  updatedAt?: string | Date;
+  updatedBy?: string;
+}

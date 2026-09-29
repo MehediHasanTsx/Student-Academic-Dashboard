@@ -19,8 +19,9 @@ import {
   TrendingUp,
   Settings,
   FlaskConical,
+  ShieldCheck,
 } from 'lucide-react';
-
+import { useAuth } from '@/components/providers/auth-provider';
 import { CloudSyncStatus } from '@/components/shared/cloud-sync-status';
 
 interface SidebarProps {
@@ -63,6 +64,7 @@ const NAV_SECTIONS = [
 
 export function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { isAdmin } = useAuth();
 
   return (
     <div className="flex h-full w-full flex-col border-r border-border bg-sidebar">
@@ -99,6 +101,29 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-2">
         <nav>
+          {isAdmin && (
+            <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-1.5">
+              <p className="mb-1 px-2 text-[0.65rem] font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
+                <ShieldCheck className="h-3 w-3" />
+                Admin Controls
+              </p>
+              <Link
+                href="/admin"
+                onClick={onNavigate}
+                className={cn(
+                  'flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                  pathname.startsWith('/admin')
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-foreground/80 hover:bg-primary/10 hover:text-foreground'
+                )}
+              >
+                <span>Main Data Editor</span>
+                <span className="rounded bg-primary/20 px-1 py-0.5 text-[9px] uppercase tracking-wider text-primary dark:text-primary-foreground">
+                  Admin
+                </span>
+              </Link>
+            </div>
+          )}
           {NAV_SECTIONS.map((section) => (
             <div key={section.label} className="mb-4">
               <p className="mb-1 px-3 text-[0.65rem] font-semibold uppercase tracking-widest text-muted-foreground">

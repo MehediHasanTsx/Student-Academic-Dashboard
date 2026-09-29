@@ -17,8 +17,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, GraduationCap, Clock } from 'lucide-react';
+import { Plus, Trash2, GraduationCap, Clock, RefreshCw, CloudDownload } from 'lucide-react';
 import { toast } from 'sonner';
+import { mainDataService } from '@/lib/services/main-data.service';
 import type { Exam } from '@/types/database';
 
 export default function ExamsPage() {
@@ -28,6 +29,7 @@ export default function ExamsPage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Exam | null>(null);
+  const [syncingExams, setSyncingExams] = useState(false);
 
   const loadData = async () => {
     if (!semesterId) return;
@@ -40,6 +42,21 @@ export default function ExamsPage() {
     void loadData();
   }, [semesterId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleSyncWithMain = async () => {
+    if (!semesterId) return;
+    setSyncingExams(true);
+    try {
+      const res = await mainDataService.syncExamsWithMain(semesterId);
+      await loadData();
+      toast.success(`Exams synced with Main! (${res.examCount} official exams found)`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to sync exams';
+      toast.error(msg);
+    } finally {
+      setSyncingExams(false);
+    }
+  };
+
   const today = new Date().toISOString().split('T')[0];
   const upcoming = exams.filter((e) => e.date >= today);
   const past = exams.filter((e) => e.date < today);
@@ -48,14 +65,32 @@ export default function ExamsPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Exams</h1>
           <p className="text-sm text-muted-foreground">Semester {profile.currentSemester} · {upcoming.length} upcoming</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <Button onClick={() => setDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Exam</Button>
-          <DialogContent>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSyncWithMain}
+            disabled={syncingExams}
+            className="text-xs gap-1.5"
+            title="Sync official exams published by Admin"
+          >
+            {syncingExams ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CloudDownload className="h-3.5 w-3.5 text-primary" />
+            )}
+            Sync with Main
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Button onClick={() => setDialogOpen(true)} size="sm">
+              <Plus className="mr-2 h-4 w-4" /> Add Exam
+            </Button>
+            <DialogContent>
             <ExamForm subjects={subjects} onSubmit={async (data) => {
               if (!semesterId) return;
               await examService.create(semesterId, data);
@@ -65,6 +100,7 @@ export default function ExamsPage() {
             }} onCancel={() => setDialogOpen(false)} />
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {upcoming.length > 0 && (

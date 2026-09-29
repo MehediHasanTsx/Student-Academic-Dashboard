@@ -9,7 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GraduationCap, Eye, EyeOff, Loader2, Check, X } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { GraduationCap, Eye, EyeOff, Loader2, Check, X, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function RegisterPage() {
@@ -23,6 +32,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdUsername, setCreatedUsername] = useState('');
 
   // Username availability
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -93,14 +104,20 @@ export default function RegisterPage() {
       if (result.error) {
         setError(result.error);
       } else {
-        toast.success('Account created successfully!');
-        router.replace('/onboarding');
+        setCreatedUsername(username);
+        setShowSuccessModal(true);
       }
     } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAcknowledgeAndProceed = () => {
+    setShowSuccessModal(false);
+    toast.success('Account created successfully!');
+    router.replace('/onboarding');
   };
 
   return (
@@ -264,6 +281,39 @@ export default function RegisterPage() {
           </a>
         </p>
       </div>
+
+      {/* Credential Reminder Modal */}
+      <AlertDialog open={showSuccessModal} onOpenChange={() => {}}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+              <KeyRound className="h-6 w-6" />
+            </div>
+            <AlertDialogTitle className="text-center text-lg">
+              Account Created Successfully
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 pt-2 text-center text-foreground">
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm font-medium text-amber-600 dark:text-amber-400">
+                &ldquo;Please remember your username and password. You will need them to log in in the future.&rdquo;
+              </div>
+              <div className="rounded-md bg-muted p-2.5 text-xs text-muted-foreground">
+                Your registered username: <strong className="font-mono text-foreground">{createdUsername}</strong>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Login requires only your username and password. Your mobile number is kept for profile contact and security.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction
+              onClick={handleAcknowledgeAndProceed}
+              className="w-full sm:w-auto"
+            >
+              I Remember My Credentials — Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

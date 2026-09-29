@@ -7,6 +7,7 @@ export interface AuthUser {
   id: string;
   username: string;
   mobile: string;
+  role: 'admin' | 'student';
 }
 
 interface AuthResponse {

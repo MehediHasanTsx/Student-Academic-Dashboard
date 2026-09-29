@@ -18,9 +18,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Pencil, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Pencil, RefreshCw, CloudDownload } from 'lucide-react';
 import { toast } from 'sonner';
-import { seed5thSemesterRoutine } from '@/lib/db/seed';
+import { mainDataService } from '@/lib/services/main-data.service';
 import type { RoutineSlot, DayOfWeek } from '@/types/database';
 
 export default function RoutinePage() {
@@ -32,7 +32,8 @@ export default function RoutinePage() {
   const [editingSlot, setEditingSlot] = useState<RoutineSlot | null>(null);
   const [defaultDay, setDefaultDay] = useState<DayOfWeek>('sunday');
   const [deleteTarget, setDeleteTarget] = useState<RoutineSlot | null>(null);
-  const [loadingRoutine, setLoadingRoutine] = useState(false);
+  const [syncingRoutine, setSyncingRoutine] = useState(false);
+  const [showSyncConfirm, setShowSyncConfirm] = useState(false);
   const today = getCurrentDay();
 
   const loadData = async () => {
@@ -69,16 +70,19 @@ export default function RoutinePage() {
     await loadData();
   };
 
-  const handleLoad5thSemRoutine = async () => {
-    setLoadingRoutine(true);
+  const handleSyncWithMain = async () => {
+    if (!semesterId) return;
+    setSyncingRoutine(true);
     try {
-      await seed5thSemesterRoutine(true);
+      const res = await mainDataService.syncRoutineWithMain(semesterId);
       await loadData();
-      toast.success('5th Semester routine loaded successfully!');
-    } catch {
-      toast.error('Failed to load 5th semester routine.');
+      toast.success(`Routine synced with Main! Loaded ${res.slotCount} class slots.`);
+      setShowSyncConfirm(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to sync routine';
+      toast.error(msg);
     } finally {
-      setLoadingRoutine(false);
+      setSyncingRoutine(false);
     }
   };
 
@@ -92,18 +96,21 @@ export default function RoutinePage() {
           <p className="text-sm text-muted-foreground">Semester {profile.currentSemester} · Weekly schedule</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {profile?.currentSemester === 5 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLoad5thSemRoutine}
-              disabled={loadingRoutine}
-              className="text-xs"
-            >
-              <Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-500" />
-              {routine.length === 0 ? 'Load 5th Sem Routine' : 'Reset to 5th Sem Routine'}
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSyncConfirm(true)}
+            disabled={syncingRoutine}
+            className="text-xs gap-1.5"
+            title="Reset routine to official Main Routine"
+          >
+            {syncingRoutine ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CloudDownload className="h-3.5 w-3.5 text-primary" />
+            )}
+            Sync with Main
+          </Button>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) setEditingSlot(null);
@@ -232,6 +239,30 @@ export default function RoutinePage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Sync with Main Routine Confirmation Modal */}
+      <AlertDialog open={showSyncConfirm} onOpenChange={setShowSyncConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync Routine with Main?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 text-foreground/80">
+              <p>
+                This will reset your personal routine for Semester {profile.currentSemester} to the official DCC CSE schedule maintained by Admin.
+              </p>
+              <div className="rounded-md bg-muted p-2.5 text-xs text-muted-foreground">
+                🛡️ <strong>Safety Guarantee:</strong> Your attendance history, subjects, exams, grades, and personal notes will <strong>NOT</strong> be deleted or overwritten.
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep My Routine</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSyncWithMain} className="gap-1.5">
+              <RefreshCw className="h-4 w-4" />
+              Reset & Sync Routine
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

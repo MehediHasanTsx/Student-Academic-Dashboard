@@ -37,21 +37,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, BookOpen, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
+import { Plus, Pencil, BookOpen, ChevronUp, ChevronDown, RefreshCw, CloudDownload } from 'lucide-react';
 import { toast } from 'sonner';
-import { seed5thSemesterSubjects } from '@/lib/db/seed';
+import { mainDataService } from '@/lib/services/main-data.service';
 import type { Subject } from '@/types/database';
 
 export default function SubjectsPage() {
   const { profile } = useProfile();
   const semesterId = profile ? `semester-${profile.currentSemester}` : undefined;
-  const { subjects, loading, createSubject, updateSubject, deleteSubject, reorderSubjects, reload } = useSubjects(semesterId);
+  const { subjects, loading, createSubject, updateSubject, reorderSubjects, reload } = useSubjects(semesterId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Subject | null>(null);
   const [search, setSearch] = useState('');
-  const [loadingDefaults, setLoadingDefaults] = useState(false);
+  const [syncingSubjects, setSyncingSubjects] = useState(false);
+  const [showSyncConfirm, setShowSyncConfirm] = useState(false);
 
   const filtered = subjects.filter(
     (s) =>
@@ -64,17 +64,6 @@ export default function SubjectsPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    try {
-      await deleteSubject(deleteTarget.id);
-      toast.success(`"${deleteTarget.name}" deleted.`);
-      setDeleteTarget(null);
-    } catch {
-      toast.error('Failed to delete subject.');
-    }
-  };
-
   const handleMove = async (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= subjects.length) return;
@@ -85,16 +74,19 @@ export default function SubjectsPage() {
     toast.success('Subject order updated.');
   };
 
-  const handleLoad5thSemDefaults = async () => {
-    setLoadingDefaults(true);
+  const handleSyncWithMain = async () => {
+    if (!semesterId) return;
+    setSyncingSubjects(true);
     try {
-      await seed5thSemesterSubjects(true);
+      const res = await mainDataService.syncSubjectsWithMain(semesterId);
       await reload();
-      toast.success('5th Semester subjects loaded successfully!');
-    } catch {
-      toast.error('Failed to load 5th semester subjects.');
+      toast.success(`Subjects synced with Main! (${res.updated} updated, ${res.added} added)`);
+      setShowSyncConfirm(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to sync subjects';
+      toast.error(msg);
     } finally {
-      setLoadingDefaults(false);
+      setSyncingSubjects(false);
     }
   };
 
@@ -108,18 +100,21 @@ export default function SubjectsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {profile?.currentSemester === 5 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLoad5thSemDefaults}
-              disabled={loadingDefaults}
-              className="text-xs"
-            >
-              <Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-500" />
-              {subjects.length === 0 ? 'Load 5th Sem Defaults' : 'Reset to 5th Sem'}
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSyncConfirm(true)}
+            disabled={syncingSubjects}
+            className="text-xs gap-1.5"
+            title="Sync subjects with official Main Subjects"
+          >
+            {syncingSubjects ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CloudDownload className="h-3.5 w-3.5 text-primary" />
+            )}
+            Sync with Main
+          </Button>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) setEditingSubject(null);
@@ -177,11 +172,9 @@ export default function SubjectsPage() {
               <Button onClick={() => setDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Add First Subject
               </Button>
-              {profile?.currentSemester === 5 && (
-                <Button variant="secondary" onClick={handleLoad5thSemDefaults} disabled={loadingDefaults}>
-                  <Sparkles className="mr-2 h-4 w-4 text-amber-500" /> Load 5th Sem Defaults
-                </Button>
-              )}
+              <Button variant="secondary" onClick={() => setShowSyncConfirm(true)} disabled={syncingSubjects}>
+                <CloudDownload className="mr-2 h-4 w-4 text-primary" /> Sync with Main
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -210,7 +203,7 @@ export default function SubjectsPage() {
                       </div>
                     </div>
 
-                    {/* Action buttons — always visible and easy to tap on mobile, subtle on desktop hover */}
+                    {/* Action buttons — Rearrange & Edit (Delete removed to protect attendance history) */}
                     <div className="flex items-center gap-0.5 shrink-0 bg-muted/40 p-1 rounded-lg border border-border/40">
                       {/* Rearrange Up / Down */}
                       <Button
@@ -243,16 +236,6 @@ export default function SubjectsPage() {
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      {/* Delete */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        title="Delete Subject"
-                        onClick={() => setDeleteTarget(subject)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
                     </div>
                   </div>
 
@@ -268,20 +251,25 @@ export default function SubjectsPage() {
         </div>
       )}
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      {/* Sync with Main Subjects Confirmation Modal */}
+      <AlertDialog open={showSyncConfirm} onOpenChange={setShowSyncConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete &quot;{deleteTarget?.name}&quot;?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete this subject and all related attendance, results, routine entries, assignments, and exams.
-              This action cannot be undone.
+            <AlertDialogTitle>Sync Subjects with Main?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 text-foreground/80">
+              <p>
+                This will update course codes, names, teachers, credits, and rooms for Semester {profile?.currentSemester} from the official DCC CSE curriculum.
+              </p>
+              <div className="rounded-md bg-muted p-2.5 text-xs text-muted-foreground">
+                🛡️ <strong>Safety Guarantee:</strong> Your existing attendance records, grades, and custom subjects will <strong>NEVER</strong> be deleted.
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+            <AlertDialogAction onClick={handleSyncWithMain} className="gap-1.5">
+              <RefreshCw className="h-4 w-4" />
+              Sync Subjects
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

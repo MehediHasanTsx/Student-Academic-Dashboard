@@ -17,4 +17,5 @@ export const DEMO_USER = {
   id: 'demo-user-local',
   username: 'demo',
   mobile: '+8801700000000',
+  role: 'student' as const,
 } as const;

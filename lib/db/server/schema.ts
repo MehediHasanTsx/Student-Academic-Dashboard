@@ -6,6 +6,7 @@ export const users = pgTable('users', {
   username: varchar('username', { length: 30 }).notNull().unique(),
   mobile: varchar('mobile', { length: 20 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  role: varchar('role', { length: 20 }).notNull().default('student'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -64,6 +65,18 @@ export const userData = pgTable('user_data', {
   index('idx_user_data_user_id').on(table.userId),
 ]);
 
+// ── Main / Shared Data Table (Admin Maintained) ───────
+// Authoritative source of truth for subjects, routine, and exams.
+export const mainData = pgTable('main_data', {
+  id: varchar('id', { length: 50 }).primaryKey(), // e.g. 'semester-5'
+  semesterId: varchar('semester_id', { length: 50 }).notNull().default('semester-5'),
+  subjects: jsonb('subjects').notNull().default([]),
+  routine: jsonb('routine').notNull().default([]),
+  exams: jsonb('exams').notNull().default([]),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: uuid('updated_by').references(() => users.id),
+});
+
 // ── Type Exports ─────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -73,4 +86,6 @@ export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
 export type UserData = typeof userData.$inferSelect;
 export type NewUserData = typeof userData.$inferInsert;
+export type MainDataRecord = typeof mainData.$inferSelect;
+export type NewMainDataRecord = typeof mainData.$inferInsert;
 

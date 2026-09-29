@@ -20,8 +20,28 @@ export async function seedDatabase(): Promise<void> {
   await seedSemesters();
   await seedGradeScale();
   await seedSettings();
-  await seed5thSemesterSubjects();
-  await seed5thSemesterRoutine();
+  await seedInitialMainData();
+}
+
+export async function seedInitialMainData(force = false): Promise<void> {
+  try {
+    if (typeof window !== 'undefined') {
+      const { mainDataService } = await import('@/lib/services/main-data.service');
+      const subjectCount = await db().subjects.where('semesterId').equals('semester-5').count();
+      if (subjectCount === 0 || force) {
+        await mainDataService.syncSubjectsWithMain('semester-5');
+      }
+      const routineCount = await db().routine.where('semesterId').equals('semester-5').count();
+      if (routineCount === 0 || force) {
+        await mainDataService.syncRoutineWithMain('semester-5');
+      }
+      return;
+    }
+  } catch {
+    // Fall back to local constants
+  }
+  await seed5thSemesterSubjects(force);
+  await seed5thSemesterRoutine(force);
 }
 
 export async function seed5thSemesterSubjects(force = false): Promise<void> {

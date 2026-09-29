@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: user.username,
         mobile: user.mobile,
+        role: user.role === 'admin' ? 'admin' : 'student',
       },
     });
   } catch (error) {

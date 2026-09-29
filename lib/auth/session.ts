@@ -64,7 +64,7 @@ export async function createSession(
  * Also refreshes the session expiry on use.
  */
 export async function validateSession(): Promise<{
-  user: { id: string; username: string; mobile: string };
+  user: { id: string; username: string; mobile: string; role: 'admin' | 'student' };
   sessionId: string;
 } | null> {
   const cookieStore = await cookies();
@@ -82,6 +82,7 @@ export async function validateSession(): Promise<{
       userId: sessions.userId,
       username: users.username,
       mobile: users.mobile,
+      role: users.role,
     })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
@@ -122,6 +123,7 @@ export async function validateSession(): Promise<{
       id: row.userId,
       username: row.username,
       mobile: row.mobile,
+      role: (row.role === 'admin' ? 'admin' : 'student') as 'admin' | 'student',
     },
     sessionId: row.sessionId,
   };

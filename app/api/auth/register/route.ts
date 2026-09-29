@@ -111,11 +111,13 @@ export async function POST(request: NextRequest) {
         username: normalizedUsername,
         mobile: normalizedMobile,
         passwordHash,
+        role: 'student',
       })
       .returning({
         id: users.id,
         username: users.username,
         mobile: users.mobile,
+        role: users.role,
       });
 
     // ── Create session ───────────────────────────────
@@ -128,6 +130,7 @@ export async function POST(request: NextRequest) {
           id: newUser.id,
           username: newUser.username,
           mobile: newUser.mobile,
+          role: 'student' as const,
         },
       },
       { status: 201 }

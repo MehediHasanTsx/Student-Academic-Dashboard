@@ -7,6 +7,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (data: { username: string; password: string }) => Promise<{ error?: string }>;
   register: (data: {
     username: string;
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   isLoading: true,
   isAuthenticated: false,
+  isAdmin: false,
   login: async () => ({}),
   register: async () => ({}),
   logout: async () => {},
@@ -100,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
         login,
         register,
         logout,
