@@ -18,17 +18,16 @@ export function useCloudSync() {
   const { isAuthenticated } = useAuth();
   const initialSyncDone = useRef(false);
 
-  // ── Initial upload after first load ──────────────────
+  // ── Initial smart sync on startup ──────────────────
   useEffect(() => {
     if (!isReady || !isAuthenticated || !hasActiveDb()) return;
 
-    // Do an initial upload after first load (ensures server has latest data)
     if (!initialSyncDone.current) {
       initialSyncDone.current = true;
-      // Small delay to let the app fully load
+      // Delay slightly for initial render to settle
       const timer = setTimeout(() => {
-        void cloudSyncService.uploadToServer();
-      }, 5000);
+        void cloudSyncService.smartSync();
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [isReady, isAuthenticated]);

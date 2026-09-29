@@ -1,21 +1,24 @@
 import { db } from '@/lib/db/database';
+import { getActiveUserId } from '@/lib/db/user-db';
 
 /**
- * Cloud sync service — syncs all IndexedDB data to/from the server (Neon PostgreSQL).
+ * Cloud Sync Service — Two-way, multi-device synchronization engine
+ * Syncs IndexedDB local data with Neon PostgreSQL cloud database.
  *
- * Strategy: Store a full JSON snapshot of all tables as a single JSONB blob.
- * - On login (new device): download snapshot → populate IndexedDB
- * - After data changes: upload snapshot → overwrite server blob (debounced)
- * - On tab focus / reload: refresh from server if data changed on another device
- * - On tab hide / close: flush pending uploads immediately
- * - Conflict resolution: last-write-wins with timestamp comparison
+ * Capabilities:
+ * - Smart Sync: Compares timestamps between local device and cloud to pick the latest version.
+ * - Push to Cloud: Explicitly uploads this device's data as the cloud source of truth.
+ * - Pull from Cloud: Explicitly downloads the cloud snapshot and updates this device.
+ * - Auto-sync: Debounced background upload on any data edit (1.5s).
+ * - Multi-device awareness: Checks for changes made on other devices when tab is focused.
+ * - Safe persistence: Preserves sync state in localStorage across page reloads.
  */
 
 // ── Types ────────────────────────────────────────────
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
 
-interface SyncData {
+export interface SyncData {
   profile: unknown[];
   semesters: unknown[];
   subjects: unknown[];
@@ -32,20 +35,49 @@ interface SyncData {
   projects: unknown[];
 }
 
+export type SmartSyncResult =
+  | { success: true; action: 'uploaded' | 'downloaded' | 'up_to_date'; message: string }
+  | { success: false; action: 'error'; message: string };
+
+// ── Local Storage Helpers ─────────────────────────────
+
+function getStorageKey(key: string): string {
+  const userId = getActiveUserId() || 'global';
+  return `dcc_sync_${userId}_${key}`;
+}
+
+function getStoredString(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(getStorageKey(key));
+  } catch {
+    return null;
+  }
+}
+
+function setStoredString(key: string, value: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (value === null) {
+      localStorage.removeItem(getStorageKey(key));
+    } else {
+      localStorage.setItem(getStorageKey(key), value);
+    }
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 // ── Internal State ───────────────────────────────────
 
 let _syncTimer: ReturnType<typeof setTimeout> | null = null;
-const SYNC_DELAY_MS = 1500; // 1.5 seconds after last change for quick feedback
+const SYNC_DELAY_MS = 1500;
 
 /** Flag to suppress re-uploading data that was just downloaded from server */
 let _isSyncing = false;
 
-/** Last known server-side updatedAt timestamp (ISO string) */
-let _lastServerTimestamp: string | null = null;
-
 let _syncStatus: SyncStatus = 'idle';
 let _lastSyncTime: Date | null = null;
-let _hasPendingChanges = false;
 const _statusListeners: Array<(status: SyncStatus, lastSyncTime: Date | null) => void> = [];
 
 function setSyncStatus(status: SyncStatus) {
@@ -55,7 +87,7 @@ function setSyncStatus(status: SyncStatus) {
   }
 }
 
-// ── Export all IndexedDB data as a snapshot ───────────
+// ── Snapshot Helpers ─────────────────────────────────
 
 async function exportSnapshot(): Promise<SyncData> {
   const [
@@ -85,8 +117,6 @@ async function exportSnapshot(): Promise<SyncData> {
     exams, notes, settings, projects,
   };
 }
-
-// ── Import snapshot into IndexedDB ───────────────────
 
 async function importSnapshot(data: SyncData): Promise<void> {
   _isSyncing = true;
@@ -136,38 +166,37 @@ async function importSnapshot(data: SyncData): Promise<void> {
       }
     );
   } finally {
-    // Small delay to let any remaining Dexie hooks settle before allowing uploads
+    // Settle Dexie hooks before allowing uploads
     setTimeout(() => { _isSyncing = false; }, 500);
   }
 }
 
-// ── Public API ───────────────────────────────────────
+// ── Public Service ───────────────────────────────────
 
 export const cloudSyncService = {
-  /** Returns true if the service is currently importing data from the server */
   isSyncing(): boolean {
     return _isSyncing;
   },
 
-  /** Get current sync status ('idle' | 'syncing' | 'synced' | 'error') */
   getStatus(): SyncStatus {
     return _syncStatus;
   },
 
-  /** Get timestamp of the last successful sync */
   getLastSyncTime(): Date | null {
+    if (!_lastSyncTime) {
+      const stored = getStoredString('last_sync_time');
+      if (stored) _lastSyncTime = new Date(stored);
+    }
     return _lastSyncTime;
   },
 
-  /** Check if there are changes waiting to be pushed */
   hasPendingChanges(): boolean {
-    return _hasPendingChanges || _syncTimer !== null;
+    return getStoredString('has_pending') === 'true' || _syncTimer !== null;
   },
 
-  /** Subscribe to sync status updates */
   subscribe(listener: (status: SyncStatus, lastSyncTime: Date | null) => void): () => void {
     _statusListeners.push(listener);
-    listener(_syncStatus, _lastSyncTime);
+    listener(_syncStatus, this.getLastSyncTime());
     return () => {
       const idx = _statusListeners.indexOf(listener);
       if (idx >= 0) _statusListeners.splice(idx, 1);
@@ -175,115 +204,171 @@ export const cloudSyncService = {
   },
 
   /**
-   * Download all data from the server and populate IndexedDB.
-   * Called on login when the local database is empty or on a new device.
-   * Returns true if data was restored, false if no server data exists.
+   * Explicit Push: Force upload current device's local data to the cloud.
+   * Useful when user knows this device holds the freshest data (e.g., phone).
    */
-  async downloadFromServer(): Promise<boolean> {
-    try {
-      setSyncStatus('syncing');
-      const res = await fetch('/api/sync', { credentials: 'include' });
-      if (!res.ok) {
-        setSyncStatus('idle');
-        return false;
-      }
-
-      const { data, updatedAt } = await res.json();
-      if (!data) {
-        setSyncStatus('idle');
-        return false;
-      }
-
-      _lastServerTimestamp = updatedAt ?? null;
-      await importSnapshot(data as SyncData);
-      _lastSyncTime = updatedAt ? new Date(updatedAt) : new Date();
-      setSyncStatus('synced');
-      console.log('✅ All data restored from cloud');
-      return true;
-    } catch (err) {
-      console.warn('Cloud sync download failed:', err);
-      setSyncStatus('error');
-      return false;
-    }
-  },
-
-  /**
-   * Upload all IndexedDB data to the server.
-   * Called after data changes to keep the server in sync.
-   */
-  async uploadToServer(): Promise<boolean> {
-    if (_isSyncing) return false; // Don't upload while importing
+  async pushToCloud(): Promise<boolean> {
+    if (_isSyncing) return false;
+    this.cancelPendingUpload();
     setSyncStatus('syncing');
 
     try {
       const snapshot = await exportSnapshot();
-
       const res = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ data: snapshot }),
-        keepalive: true, // Ensure upload completes even if page is closing
+        keepalive: true,
       });
 
       if (!res.ok) {
-        console.warn('Cloud sync upload failed:', res.status);
         setSyncStatus('error');
         return false;
       }
 
-      // Update our known timestamp from server response
-      try {
-        const result = await res.json();
-        if (result.updatedAt) {
-          _lastServerTimestamp = result.updatedAt;
-          _lastSyncTime = new Date(result.updatedAt);
-        } else {
-          _lastSyncTime = new Date();
-        }
-      } catch {
-        _lastSyncTime = new Date();
-      }
+      const result = await res.json();
+      const serverTs = result.updatedAt || new Date().toISOString();
 
-      _hasPendingChanges = false;
+      setStoredString('last_server_ts', serverTs);
+      setStoredString('last_sync_time', serverTs);
+      setStoredString('has_pending', 'false');
+      setStoredString('last_local_edit', null);
+
+      _lastSyncTime = new Date(serverTs);
       setSyncStatus('synced');
-      console.log('✅ Data synced to cloud');
+      console.log('✅ Local data uploaded as cloud source of truth');
       return true;
     } catch (err) {
-      console.warn('Cloud sync upload failed:', err);
+      console.error('Push to cloud failed:', err);
       setSyncStatus('error');
       return false;
     }
   },
 
   /**
-   * Force an immediate sync now.
+   * Explicit Pull: Force download cloud snapshot to overwrite local device.
+   * Useful when device needs to catch up to the latest cloud version.
    */
-  async forceSync(): Promise<boolean> {
-    this.cancelPendingUpload();
-    return await this.uploadToServer();
+  async pullFromCloud(): Promise<boolean> {
+    setSyncStatus('syncing');
+
+    try {
+      const res = await fetch('/api/sync', { credentials: 'include' });
+      if (!res.ok) {
+        setSyncStatus('error');
+        return false;
+      }
+
+      const { data, updatedAt } = await res.json();
+      if (!data) {
+        setSyncStatus('synced');
+        return false;
+      }
+
+      await importSnapshot(data as SyncData);
+
+      const serverTs = updatedAt || new Date().toISOString();
+      setStoredString('last_server_ts', serverTs);
+      setStoredString('last_sync_time', serverTs);
+      setStoredString('has_pending', 'false');
+      setStoredString('last_local_edit', null);
+
+      _lastSyncTime = new Date(serverTs);
+      setSyncStatus('synced');
+      console.log('✅ Overwritten local data with latest cloud snapshot');
+      return true;
+    } catch (err) {
+      console.error('Pull from cloud failed:', err);
+      setSyncStatus('error');
+      return false;
+    }
   },
 
   /**
-   * Schedule a debounced upload to the server.
-   * Call this after any data change. Multiple rapid changes
-   * will be batched into a single upload.
+   * Smart Sync: Two-way synchronization based on timestamps and pending changes.
+   * - If server is newer and local has no pending edits: Downloads from cloud.
+   * - If local has pending edits: Uploads to cloud.
+   * - If both are equal: Reports up to date.
+   */
+  async smartSync(): Promise<SmartSyncResult> {
+    if (_isSyncing) {
+      return { success: true, action: 'up_to_date', message: 'Sync in progress...' };
+    }
+
+    setSyncStatus('syncing');
+
+    try {
+      // 1. Fetch server state
+      const res = await fetch('/api/sync', { credentials: 'include' });
+      if (!res.ok) {
+        setSyncStatus('error');
+        return { success: false, action: 'error', message: 'Could not connect to cloud database.' };
+      }
+
+      const { data: serverData, updatedAt: serverUpdatedAt } = await res.json();
+      const hasPending = getStoredString('has_pending') === 'true';
+      const lastKnownServerTs = getStoredString('last_server_ts');
+      const lastLocalEdit = getStoredString('last_local_edit');
+
+      // Case A: Cloud is completely empty
+      if (!serverData) {
+        const ok = await this.pushToCloud();
+        return ok
+          ? { success: true, action: 'uploaded', message: 'Uploaded initial data to cloud.' }
+          : { success: false, action: 'error', message: 'Failed to upload initial data.' };
+      }
+
+      // Case B: Local has unsaved edits made on this device
+      if (hasPending && lastLocalEdit) {
+        const localEditTime = new Date(parseInt(lastLocalEdit, 10)).getTime();
+        const serverTime = serverUpdatedAt ? new Date(serverUpdatedAt).getTime() : 0;
+
+        // If local edit is newer than server, upload local
+        if (localEditTime >= serverTime) {
+          const ok = await this.pushToCloud();
+          return ok
+            ? { success: true, action: 'uploaded', message: 'Uploaded your latest edits to cloud.' }
+            : { success: false, action: 'error', message: 'Failed to upload edits.' };
+        }
+      }
+
+      // Case C: Server has newer data than what this device last downloaded
+      if (serverUpdatedAt && serverUpdatedAt !== lastKnownServerTs) {
+        const ok = await this.pullFromCloud();
+        return ok
+          ? { success: true, action: 'downloaded', message: 'Downloaded latest updates from cloud.' }
+          : { success: false, action: 'error', message: 'Failed to download updates.' };
+      }
+
+      // Case D: Already in sync
+      _lastSyncTime = serverUpdatedAt ? new Date(serverUpdatedAt) : new Date();
+      setSyncStatus('synced');
+      return { success: true, action: 'up_to_date', message: 'All academic data is up to date.' };
+    } catch (err) {
+      console.error('Smart sync failed:', err);
+      setSyncStatus('error');
+      return { success: false, action: 'error', message: 'Sync error occurred.' };
+    }
+  },
+
+  /**
+   * Schedule a debounced upload when local data is modified.
    */
   scheduleUpload(): void {
-    if (_isSyncing) return; // Don't re-upload data we just downloaded
-    _hasPendingChanges = true;
+    if (_isSyncing) return;
+
+    setStoredString('has_pending', 'true');
+    setStoredString('last_local_edit', String(Date.now()));
     setSyncStatus('syncing');
 
     if (_syncTimer) clearTimeout(_syncTimer);
     _syncTimer = setTimeout(() => {
       _syncTimer = null;
-      void cloudSyncService.uploadToServer();
+      void cloudSyncService.pushToCloud();
     }, SYNC_DELAY_MS);
   },
 
-  /**
-   * Cancel any pending upload.
-   */
   cancelPendingUpload(): void {
     if (_syncTimer) {
       clearTimeout(_syncTimer);
@@ -291,48 +376,26 @@ export const cloudSyncService = {
     }
   },
 
-  /**
-   * Flush any pending upload immediately.
-   * Call when the user is about to leave the page (tab hidden, page closing).
-   */
   async flushPendingUpload(): Promise<void> {
-    if (_syncTimer || _hasPendingChanges) {
-      if (_syncTimer) {
-        clearTimeout(_syncTimer);
-        _syncTimer = null;
-      }
-      await cloudSyncService.uploadToServer();
+    if (_syncTimer || getStoredString('has_pending') === 'true') {
+      this.cancelPendingUpload();
+      await this.pushToCloud();
     }
   },
 
-  /**
-   * Refresh local data from the server if it has changed.
-   * Compares server timestamp with our last known timestamp to avoid
-   * redundant downloads.
-   */
+  // Legacy aliases for backward compatibility
+  async downloadFromServer(): Promise<boolean> {
+    return this.pullFromCloud();
+  },
+  async uploadToServer(): Promise<boolean> {
+    return this.pushToCloud();
+  },
+  async forceSync(): Promise<boolean> {
+    const res = await this.smartSync();
+    return res.success;
+  },
   async refreshFromServer(): Promise<boolean> {
-    if (_isSyncing) return false;
-    try {
-      const res = await fetch('/api/sync', { credentials: 'include' });
-      if (!res.ok) return false;
-
-      const { data, updatedAt } = await res.json();
-      if (!data) return false;
-
-      // Skip if we already have this exact version
-      if (updatedAt && _lastServerTimestamp && updatedAt === _lastServerTimestamp) {
-        return false;
-      }
-
-      _lastServerTimestamp = updatedAt ?? null;
-      await importSnapshot(data as SyncData);
-      _lastSyncTime = updatedAt ? new Date(updatedAt) : new Date();
-      setSyncStatus('synced');
-      console.log('✅ Data refreshed from cloud (changes from another device)');
-      return true;
-    } catch (err) {
-      console.warn('Cloud sync refresh failed:', err);
-      return false;
-    }
+    const res = await this.smartSync();
+    return res.success && res.action === 'downloaded';
   },
 };

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { cloudSyncService, type SyncStatus } from '@/lib/services/cloud-sync.service';
 import { Button } from '@/components/ui/button';
-import { CloudCheck, RefreshCw, AlertCircle } from 'lucide-react';
+import { CloudCheck, RefreshCw, AlertCircle, CloudUpload, CloudDownload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function CloudSyncStatus({
@@ -25,17 +25,49 @@ export function CloudSyncStatus({
     return unsubscribe;
   }, []);
 
-  const handleManualSync = async () => {
+  const handleSmartSync = async () => {
     setIsManualSyncing(true);
     try {
-      const ok = await cloudSyncService.forceSync();
-      if (ok) {
-        toast.success('All academic data backed up to cloud!');
+      const res = await cloudSyncService.smartSync();
+      if (res.success) {
+        toast.success(res.message);
       } else {
-        toast.error('Cloud sync failed. Check internet connection.');
+        toast.error(res.message || 'Sync failed.');
       }
     } catch {
       toast.error('Error during cloud sync.');
+    } finally {
+      setIsManualSyncing(false);
+    }
+  };
+
+  const handleForceUpload = async () => {
+    setIsManualSyncing(true);
+    try {
+      const ok = await cloudSyncService.pushToCloud();
+      if (ok) {
+        toast.success('This device’s academic data uploaded to cloud successfully!');
+      } else {
+        toast.error('Failed to upload data to cloud.');
+      }
+    } catch {
+      toast.error('Error uploading to cloud.');
+    } finally {
+      setIsManualSyncing(false);
+    }
+  };
+
+  const handleForceDownload = async () => {
+    setIsManualSyncing(true);
+    try {
+      const ok = await cloudSyncService.pullFromCloud();
+      if (ok) {
+        toast.success('Latest cloud data downloaded to this device!');
+      } else {
+        toast.error('Failed to download data from cloud.');
+      }
+    } catch {
+      toast.error('Error downloading from cloud.');
     } finally {
       setIsManualSyncing(false);
     }
@@ -48,9 +80,9 @@ export function CloudSyncStatus({
       <Button
         variant="ghost"
         size="sm"
-        onClick={handleManualSync}
+        onClick={handleSmartSync}
         disabled={isSyncing}
-        title="Cloud Sync — Tap to sync changes to database now"
+        title="Cloud Sync — Tap to sync changes across devices now"
         className={`h-8 px-2.5 text-xs font-medium rounded-full border transition-all ${
           isSyncing
             ? 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400'
@@ -82,7 +114,7 @@ export function CloudSyncStatus({
   // Card variant for sidebar and settings
   return (
     <div className={`rounded-xl border border-border/70 p-3 bg-muted/30 ${className}`}>
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {isSyncing ? (
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15 text-amber-500">
@@ -110,16 +142,44 @@ export function CloudSyncStatus({
         </div>
       </div>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleManualSync}
-        disabled={isSyncing}
-        className="w-full h-7 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition-all"
-      >
-        <RefreshCw className={`h-3 w-3 mr-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
-        {isSyncing ? 'Backing up...' : 'Sync Now'}
-      </Button>
+      <div className="space-y-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSmartSync}
+          disabled={isSyncing}
+          className="w-full h-8 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition-all"
+        >
+          <RefreshCw className={`h-3 w-3 mr-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
+          {isSyncing ? 'Synchronizing...' : 'Smart Sync (Auto)'}
+        </Button>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleForceUpload}
+            disabled={isSyncing}
+            title="Send this device's data to cloud"
+            className="h-7 text-[0.7rem] font-medium"
+          >
+            <CloudUpload className="h-3 w-3 mr-1 text-emerald-600 dark:text-emerald-400" />
+            Upload to Cloud
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleForceDownload}
+            disabled={isSyncing}
+            title="Pull latest cloud backup into this device"
+            className="h-7 text-[0.7rem] font-medium"
+          >
+            <CloudDownload className="h-3 w-3 mr-1 text-sky-600 dark:text-sky-400" />
+            Download Cloud
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
