@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     if (!emailResult.success) {
       console.error('[Forgot Password] Email delivery failed:', emailResult.error);
       return NextResponse.json(
-        { error: 'Failed to send verification email. Please try again later.' },
+        { error: emailResult.error || 'Failed to send verification email. Please check your email configuration.' },
         { status: 500 }
       );
     }

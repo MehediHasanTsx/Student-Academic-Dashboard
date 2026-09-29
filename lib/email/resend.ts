@@ -1,11 +1,5 @@
 import { Resend } from 'resend';
 
-// Resend client instance (server-side only)
-const apiKey = process.env.RESEND_API_KEY;
-const resend = apiKey ? new Resend(apiKey) : null;
-
-const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'DCC CSE <onboarding@resend.dev>';
-
 interface SendOtpEmailParams {
   to: string;
   username: string;
@@ -17,6 +11,22 @@ export async function sendOtpEmail({
   username,
   otp,
 }: SendOtpEmailParams): Promise<{ success: boolean; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'DCC CSE <onboarding@resend.dev>';
+
+  if (!apiKey) {
+    console.error(
+      `\n❌ [EMAIL SERVICE ERROR] RESEND_API_KEY is not set in .env.local!\n` +
+      `Simulated OTP for user "${username}" (${to}): ${otp}\n` +
+      `To deliver actual emails to real inboxes, create a free account at https://resend.com, generate an API key, and add it to .env.local as RESEND_API_KEY=re_...\n`
+    );
+    return {
+      success: false,
+      error: 'Email service is not configured. Please add RESEND_API_KEY to your environment variables.',
+    };
+  }
+
+  const resend = new Resend(apiKey);
   const subject = 'DCC CSE Password Reset Code';
 
   const html = `
@@ -117,7 +127,7 @@ Dhaka City College - Department of Computer Science & Engineering
 
   try {
     const { error } = await resend.emails.send({
-      from: DEFAULT_FROM,
+      from: fromEmail,
       to,
       subject,
       html,
@@ -126,6 +136,12 @@ Dhaka City College - Department of Computer Science & Engineering
 
     if (error) {
       console.error('[Resend Error]', error);
+      // Give a helpful hint if they're testing with the free onboarding domain
+      if (error.message?.includes('testing emails to your own email address')) {
+        console.error(
+          '\n💡 [Resend Free Tier Notice]: With onboarding@resend.dev, you can only send emails to the email address registered with your Resend account. To send to any recipient, verify your domain at https://resend.com/domains.\n'
+        );
+      }
       return { success: false, error: error.message };
     }
 
