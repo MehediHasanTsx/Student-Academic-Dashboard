@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 interface SendOtpEmailParams {
   to: string;
@@ -11,22 +12,24 @@ export async function sendOtpEmail({
   username,
   otp,
 }: SendOtpEmailParams): Promise<{ success: boolean; error?: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'DCC CSE <onboarding@resend.dev>';
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPassword = process.env.SMTP_PASSWORD;
+  const smtpFrom = process.env.SMTP_FROM || `DCC CSE <${smtpUser}>`;
 
-  if (!apiKey) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'DCC CSE <onboarding@resend.dev>';
+
+  if (!smtpUser && !resendApiKey) {
     console.error(
-      `\n❌ [EMAIL SERVICE ERROR] RESEND_API_KEY is not set in .env.local!\n` +
-      `Simulated OTP for user "${username}" (${to}): ${otp}\n` +
-      `To deliver actual emails to real inboxes, create a free account at https://resend.com, generate an API key, and add it to .env.local as RESEND_API_KEY=re_...\n`
+      `\n❌ [EMAIL SERVICE ERROR] Neither SMTP_USER nor RESEND_API_KEY is configured in .env.local!\n` +
+      `Simulated OTP for user "${username}" (${to}): ${otp}\n`
     );
     return {
       success: false,
-      error: 'Email service is not configured. Please add RESEND_API_KEY to your environment variables.',
+      error: 'Email service is not configured. Please add SMTP_USER/SMTP_PASSWORD or RESEND_API_KEY to your environment variables.',
     };
   }
 
-  const resend = new Resend(apiKey);
   const subject = 'DCC CSE Password Reset Code';
 
   const html = `
@@ -118,37 +121,57 @@ Security Notice: If you did not request a password reset, please ignore this ema
 Dhaka City College - Department of Computer Science & Engineering
   `.trim();
 
-  if (!resend) {
-    console.warn(
-      `\n⚠️ [EMAIL SERVICE] RESEND_API_KEY is not set in environment. Simulated OTP email for user: ${username} (${to}) -> CODE: ${otp}\n`
-    );
-    return { success: true };
-  }
+  // 1. Prefer Gmail SMTP if credentials are provided (sends to any recipient domain without restrictions)
+  if (smtpUser && smtpPassword) {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: smtpUser,
+          pass: smtpPassword.replace(/\s+/g, ''),
+        },
+      });
 
-  try {
-    const { error } = await resend.emails.send({
-      from: fromEmail,
-      to,
-      subject,
-      html,
-      text,
-    });
+      await transporter.sendMail({
+        from: smtpFrom,
+        to,
+        subject,
+        html,
+        text,
+      });
 
-    if (error) {
-      console.error('[Resend Error]', error);
-      // Give a helpful hint if they're testing with the free onboarding domain
-      if (error.message?.includes('testing emails to your own email address')) {
-        console.error(
-          '\n💡 [Resend Free Tier Notice]: With onboarding@resend.dev, you can only send emails to the email address registered with your Resend account. To send to any recipient, verify your domain at https://resend.com/domains.\n'
-        );
-      }
-      return { success: false, error: error.message };
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'SMTP delivery failed';
+      console.error('[Gmail SMTP Error]', err);
+      return { success: false, error: message };
     }
-
-    return { success: true };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to send email';
-    console.error('[Resend Exception]', err);
-    return { success: false, error: message };
   }
+
+  // 2. Fall back to Resend API
+  if (resendApiKey) {
+    try {
+      const resend = new Resend(resendApiKey);
+      const { error } = await resend.emails.send({
+        from: resendFromEmail,
+        to,
+        subject,
+        html,
+        text,
+      });
+
+      if (error) {
+        console.error('[Resend Error]', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to send email';
+      console.error('[Resend Exception]', err);
+      return { success: false, error: message };
+    }
+  }
+
+  return { success: false, error: 'No email delivery provider configured.' };
 }
