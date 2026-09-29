@@ -14,6 +14,7 @@ export const subjectSchema = z.object({
   endTime: z.string().optional().or(z.literal('')),
   room: z.string().max(50).optional().or(z.literal('')),
   color: z.string().max(20).optional().or(z.literal('')),
+  order: z.number().optional(),
 });
 
 export type SubjectFormData = z.infer<typeof subjectSchema>;

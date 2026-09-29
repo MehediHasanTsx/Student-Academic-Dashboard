@@ -7,7 +7,24 @@ export const subjectService = {
    * Get all subjects for a semester.
    */
   async getBySemester(semesterId: string): Promise<Subject[]> {
-    return db().subjects.where('semesterId').equals(semesterId).toArray();
+    const list = await db().subjects.where('semesterId').equals(semesterId).toArray();
+    return list.sort((a, b) => {
+      const orderA = a.order ?? 9999;
+      const orderB = b.order ?? 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.code.localeCompare(b.code);
+    });
+  },
+
+  /**
+   * Reorder subjects in a semester.
+   */
+  async reorder(semesterId: string, orderedIds: string[]): Promise<void> {
+    await db().transaction('rw', db().subjects, async () => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        await db().subjects.update(orderedIds[i], { order: i, updatedAt: new Date() });
+      }
+    });
   },
 
   /**

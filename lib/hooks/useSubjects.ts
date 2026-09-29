@@ -46,12 +46,19 @@ export function useSubjects(semesterId: string | undefined) {
     await load();
   }, [load]);
 
+  const reorderSubjects = useCallback(async (orderedIds: string[]) => {
+    if (!semesterId) return;
+    await subjectService.reorder(semesterId, orderedIds);
+    await load();
+  }, [semesterId, load]);
+
   return {
     subjects,
     loading,
     createSubject,
     updateSubject,
     deleteSubject,
+    reorderSubjects,
     reload: load,
   };
 }

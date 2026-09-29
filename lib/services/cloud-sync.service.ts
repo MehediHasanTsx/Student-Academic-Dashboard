@@ -13,6 +13,8 @@ import { db } from '@/lib/db/database';
 
 // ── Types ────────────────────────────────────────────
 
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
+
 interface SyncData {
   profile: unknown[];
   semesters: unknown[];
@@ -33,13 +35,25 @@ interface SyncData {
 // ── Internal State ───────────────────────────────────
 
 let _syncTimer: ReturnType<typeof setTimeout> | null = null;
-const SYNC_DELAY_MS = 3000; // 3 seconds after last change
+const SYNC_DELAY_MS = 1500; // 1.5 seconds after last change for quick feedback
 
 /** Flag to suppress re-uploading data that was just downloaded from server */
 let _isSyncing = false;
 
 /** Last known server-side updatedAt timestamp (ISO string) */
 let _lastServerTimestamp: string | null = null;
+
+let _syncStatus: SyncStatus = 'idle';
+let _lastSyncTime: Date | null = null;
+let _hasPendingChanges = false;
+const _statusListeners: Array<(status: SyncStatus, lastSyncTime: Date | null) => void> = [];
+
+function setSyncStatus(status: SyncStatus) {
+  _syncStatus = status;
+  for (const listener of _statusListeners) {
+    listener(_syncStatus, _lastSyncTime);
+  }
+}
 
 // ── Export all IndexedDB data as a snapshot ───────────
 
@@ -135,6 +149,31 @@ export const cloudSyncService = {
     return _isSyncing;
   },
 
+  /** Get current sync status ('idle' | 'syncing' | 'synced' | 'error') */
+  getStatus(): SyncStatus {
+    return _syncStatus;
+  },
+
+  /** Get timestamp of the last successful sync */
+  getLastSyncTime(): Date | null {
+    return _lastSyncTime;
+  },
+
+  /** Check if there are changes waiting to be pushed */
+  hasPendingChanges(): boolean {
+    return _hasPendingChanges || _syncTimer !== null;
+  },
+
+  /** Subscribe to sync status updates */
+  subscribe(listener: (status: SyncStatus, lastSyncTime: Date | null) => void): () => void {
+    _statusListeners.push(listener);
+    listener(_syncStatus, _lastSyncTime);
+    return () => {
+      const idx = _statusListeners.indexOf(listener);
+      if (idx >= 0) _statusListeners.splice(idx, 1);
+    };
+  },
+
   /**
    * Download all data from the server and populate IndexedDB.
    * Called on login when the local database is empty or on a new device.
@@ -142,18 +181,28 @@ export const cloudSyncService = {
    */
   async downloadFromServer(): Promise<boolean> {
     try {
+      setSyncStatus('syncing');
       const res = await fetch('/api/sync', { credentials: 'include' });
-      if (!res.ok) return false;
+      if (!res.ok) {
+        setSyncStatus('idle');
+        return false;
+      }
 
       const { data, updatedAt } = await res.json();
-      if (!data) return false;
+      if (!data) {
+        setSyncStatus('idle');
+        return false;
+      }
 
       _lastServerTimestamp = updatedAt ?? null;
       await importSnapshot(data as SyncData);
+      _lastSyncTime = updatedAt ? new Date(updatedAt) : new Date();
+      setSyncStatus('synced');
       console.log('✅ All data restored from cloud');
       return true;
     } catch (err) {
       console.warn('Cloud sync download failed:', err);
+      setSyncStatus('error');
       return false;
     }
   },
@@ -164,6 +213,8 @@ export const cloudSyncService = {
    */
   async uploadToServer(): Promise<boolean> {
     if (_isSyncing) return false; // Don't upload while importing
+    setSyncStatus('syncing');
+
     try {
       const snapshot = await exportSnapshot();
 
@@ -177,6 +228,7 @@ export const cloudSyncService = {
 
       if (!res.ok) {
         console.warn('Cloud sync upload failed:', res.status);
+        setSyncStatus('error');
         return false;
       }
 
@@ -185,17 +237,31 @@ export const cloudSyncService = {
         const result = await res.json();
         if (result.updatedAt) {
           _lastServerTimestamp = result.updatedAt;
+          _lastSyncTime = new Date(result.updatedAt);
+        } else {
+          _lastSyncTime = new Date();
         }
       } catch {
-        // Response parsing may fail if page is unloading, that's OK
+        _lastSyncTime = new Date();
       }
 
+      _hasPendingChanges = false;
+      setSyncStatus('synced');
       console.log('✅ Data synced to cloud');
       return true;
     } catch (err) {
       console.warn('Cloud sync upload failed:', err);
+      setSyncStatus('error');
       return false;
     }
+  },
+
+  /**
+   * Force an immediate sync now.
+   */
+  async forceSync(): Promise<boolean> {
+    this.cancelPendingUpload();
+    return await this.uploadToServer();
   },
 
   /**
@@ -205,6 +271,9 @@ export const cloudSyncService = {
    */
   scheduleUpload(): void {
     if (_isSyncing) return; // Don't re-upload data we just downloaded
+    _hasPendingChanges = true;
+    setSyncStatus('syncing');
+
     if (_syncTimer) clearTimeout(_syncTimer);
     _syncTimer = setTimeout(() => {
       _syncTimer = null;
@@ -227,9 +296,11 @@ export const cloudSyncService = {
    * Call when the user is about to leave the page (tab hidden, page closing).
    */
   async flushPendingUpload(): Promise<void> {
-    if (_syncTimer) {
-      clearTimeout(_syncTimer);
-      _syncTimer = null;
+    if (_syncTimer || _hasPendingChanges) {
+      if (_syncTimer) {
+        clearTimeout(_syncTimer);
+        _syncTimer = null;
+      }
       await cloudSyncService.uploadToServer();
     }
   },
@@ -237,9 +308,7 @@ export const cloudSyncService = {
   /**
    * Refresh local data from the server if it has changed.
    * Compares server timestamp with our last known timestamp to avoid
-   * redundant downloads. Used for multi-device sync: when the user
-   * returns to a tab, pull any changes made on other devices.
-   * Returns true if data was updated, false if already up to date.
+   * redundant downloads.
    */
   async refreshFromServer(): Promise<boolean> {
     if (_isSyncing) return false;
@@ -252,12 +321,13 @@ export const cloudSyncService = {
 
       // Skip if we already have this exact version
       if (updatedAt && _lastServerTimestamp && updatedAt === _lastServerTimestamp) {
-        console.log('ℹ️ Data is already up to date');
         return false;
       }
 
       _lastServerTimestamp = updatedAt ?? null;
       await importSnapshot(data as SyncData);
+      _lastSyncTime = updatedAt ? new Date(updatedAt) : new Date();
+      setSyncStatus('synced');
       console.log('✅ Data refreshed from cloud (changes from another device)');
       return true;
     } catch (err) {

@@ -37,19 +37,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { seed5thSemesterSubjects } from '@/lib/db/seed';
 import type { Subject } from '@/types/database';
 
 export default function SubjectsPage() {
   const { profile } = useProfile();
   const semesterId = profile ? `semester-${profile.currentSemester}` : undefined;
-  const { subjects, loading, createSubject, updateSubject, deleteSubject } = useSubjects(semesterId);
+  const { subjects, loading, createSubject, updateSubject, deleteSubject, reorderSubjects, reload } = useSubjects(semesterId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Subject | null>(null);
   const [search, setSearch] = useState('');
+  const [loadingDefaults, setLoadingDefaults] = useState(false);
 
   const filtered = subjects.filter(
     (s) =>
@@ -73,42 +75,81 @@ export default function SubjectsPage() {
     }
   };
 
+  const handleMove = async (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= subjects.length) return;
+    const newOrder = [...subjects];
+    const [removed] = newOrder.splice(index, 1);
+    newOrder.splice(targetIndex, 0, removed);
+    await reorderSubjects(newOrder.map((s) => s.id));
+    toast.success('Subject order updated.');
+  };
+
+  const handleLoad5thSemDefaults = async () => {
+    setLoadingDefaults(true);
+    try {
+      await seed5thSemesterSubjects(true);
+      await reload();
+      toast.success('5th Semester subjects loaded successfully!');
+    } catch {
+      toast.error('Failed to load 5th semester subjects.');
+    } finally {
+      setLoadingDefaults(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Subjects</h1>
           <p className="text-sm text-muted-foreground">
             Semester {profile?.currentSemester} · {subjects.length} subject{subjects.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setEditingSubject(null);
-        }}>
-          <Button onClick={() => setDialogOpen(true)}><Plus className="mr-2 h-4 w-4" /> Add Subject</Button>
-          <DialogContent className="max-w-md">
-            <SubjectForm
-              subject={editingSubject}
-              onSubmit={async (data) => {
-                try {
-                  if (editingSubject) {
-                    await updateSubject(editingSubject.id, data);
-                    toast.success('Subject updated.');
-                  } else {
-                    await createSubject(data);
-                    toast.success('Subject added.');
+        <div className="flex items-center gap-2 flex-wrap">
+          {profile?.currentSemester === 5 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLoad5thSemDefaults}
+              disabled={loadingDefaults}
+              className="text-xs"
+            >
+              <Sparkles className="mr-1.5 h-3.5 w-3.5 text-amber-500" />
+              {subjects.length === 0 ? 'Load 5th Sem Defaults' : 'Reset to 5th Sem'}
+            </Button>
+          )}
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setEditingSubject(null);
+          }}>
+            <Button onClick={() => setDialogOpen(true)} size="sm">
+              <Plus className="mr-1.5 h-4 w-4" /> Add Subject
+            </Button>
+            <DialogContent className="max-w-md">
+              <SubjectForm
+                subject={editingSubject}
+                onSubmit={async (data) => {
+                  try {
+                    if (editingSubject) {
+                      await updateSubject(editingSubject.id, data);
+                      toast.success('Subject updated.');
+                    } else {
+                      await createSubject(data);
+                      toast.success('Subject added.');
+                    }
+                    setDialogOpen(false);
+                    setEditingSubject(null);
+                  } catch {
+                    toast.error('Failed to save subject.');
                   }
-                  setDialogOpen(false);
-                  setEditingSubject(null);
-                } catch {
-                  toast.error('Failed to save subject.');
-                }
-              }}
-              onCancel={() => { setDialogOpen(false); setEditingSubject(null); }}
-            />
-          </DialogContent>
-        </Dialog>
+                }}
+                onCancel={() => { setDialogOpen(false); setEditingSubject(null); }}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {subjects.length > 3 && (
@@ -129,50 +170,101 @@ export default function SubjectsPage() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookOpen className="h-12 w-12 text-muted-foreground/30 mb-4" />
             <h3 className="text-lg font-medium mb-1">No subjects yet</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Add your courses for Semester {profile?.currentSemester} to get started.
+            <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+              Add your courses for Semester {profile?.currentSemester} or load standard departmental defaults.
             </p>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Add First Subject
-            </Button>
+            <div className="flex items-center gap-3 flex-wrap justify-center">
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Add First Subject
+              </Button>
+              {profile?.currentSemester === 5 && (
+                <Button variant="secondary" onClick={handleLoad5thSemDefaults} disabled={loadingDefaults}>
+                  <Sparkles className="mr-2 h-4 w-4 text-amber-500" /> Load 5th Sem Defaults
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((subject) => (
-            <Card key={subject.id} className="group">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div
-                      className="mt-0.5 h-3 w-3 rounded-full shrink-0"
-                      style={{ backgroundColor: subject.color || SUBJECT_COLORS[0] }}
-                    />
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{subject.name}</p>
-                      <p className="text-xs text-muted-foreground">{subject.code}</p>
-                      {subject.teacher && (
-                        <p className="text-xs text-muted-foreground mt-1">{subject.teacher}</p>
-                      )}
+          {filtered.map((subject) => {
+            const originalIndex = subjects.findIndex((s) => s.id === subject.id);
+            const isFirst = originalIndex === 0;
+            const isLast = originalIndex === subjects.length - 1;
+
+            return (
+              <Card key={subject.id} className="group border shadow-xs hover:border-primary/40 transition-all">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div
+                        className="mt-1 h-3.5 w-3.5 rounded-full shrink-0 shadow-xs"
+                        style={{ backgroundColor: subject.color || SUBJECT_COLORS[0] }}
+                      />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate">{subject.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{subject.code}</p>
+                        {subject.teacher && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">👨‍🏫 {subject.teacher}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action buttons — always visible and easy to tap on mobile, subtle on desktop hover */}
+                    <div className="flex items-center gap-0.5 shrink-0 bg-muted/40 p-1 rounded-lg border border-border/40">
+                      {/* Rearrange Up / Down */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                        disabled={isFirst || search.length > 0}
+                        title="Move Up"
+                        onClick={() => handleMove(originalIndex, 'up')}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                        disabled={isLast || search.length > 0}
+                        title="Move Down"
+                        onClick={() => handleMove(originalIndex, 'down')}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                      {/* Edit */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        title="Edit Subject"
+                        onClick={() => handleEdit(subject)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      {/* Delete */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        title="Delete Subject"
+                        onClick={() => setDeleteTarget(subject)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(subject)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(subject)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+
+                  <div className="flex items-center gap-2 mt-3 pt-2 border-t border-border/40">
+                    <Badge variant="secondary" className="text-xs font-medium">{subject.credits} cr</Badge>
+                    <Badge variant="outline" className="text-xs capitalize">{subject.type}</Badge>
+                    {subject.room && <Badge variant="outline" className="text-xs">Room {subject.room}</Badge>}
                   </div>
-                </div>
-                <div className="flex items-center gap-2 mt-3">
-                  <Badge variant="secondary" className="text-xs">{subject.credits} cr</Badge>
-                  <Badge variant="outline" className="text-xs capitalize">{subject.type}</Badge>
-                  {subject.room && <Badge variant="outline" className="text-xs">{subject.room}</Badge>}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 

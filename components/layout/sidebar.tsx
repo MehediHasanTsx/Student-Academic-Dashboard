@@ -21,6 +21,8 @@ import {
   FlaskConical,
 } from 'lucide-react';
 
+import { CloudSyncStatus } from '@/components/shared/cloud-sync-status';
+
 interface SidebarProps {
   onNavigate?: () => void;
 }
@@ -134,6 +136,11 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       </ScrollArea>
 
       <Separator />
+
+      {/* Cloud Sync Status */}
+      <div className="px-3 pt-3">
+        <CloudSyncStatus variant="card" />
+      </div>
 
       {/* Settings */}
       <div className="p-3">

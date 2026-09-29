@@ -92,6 +92,29 @@ export function useCloudSync() {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+    // ── Before closing app / leaving tab ────────────────
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (cloudSyncService.hasPendingChanges()) {
+        void cloudSyncService.flushPendingUpload();
+        e.preventDefault();
+        e.returnValue = '';
+      } else {
+        void cloudSyncService.flushPendingUpload();
+      }
+    };
+
+    const handlePageHide = () => {
+      void cloudSyncService.flushPendingUpload();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
   }, [isReady, isAuthenticated]);
 }

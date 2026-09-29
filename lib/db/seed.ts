@@ -6,6 +6,8 @@ import {
   DEFAULT_ATTENDANCE_TARGET,
   DEFAULT_TOTAL_CREDITS,
   SEMESTER_COUNT,
+  DEFAULT_5TH_SEMESTER_SUBJECTS,
+  DEFAULT_5TH_SEMESTER_ROUTINE,
 } from '@/lib/constants';
 import { generateId } from '@/lib/utils/formatters';
 import type { Settings } from '@/types/database';
@@ -18,6 +20,67 @@ export async function seedDatabase(): Promise<void> {
   await seedSemesters();
   await seedGradeScale();
   await seedSettings();
+  await seed5thSemesterSubjects();
+  await seed5thSemesterRoutine();
+}
+
+export async function seed5thSemesterSubjects(force = false): Promise<void> {
+  if (!force) {
+    const existingCount = await db().subjects.where('semesterId').equals('semester-5').count();
+    if (existingCount > 0) return;
+  }
+
+  const now = new Date();
+  const subjectsToInsert = DEFAULT_5TH_SEMESTER_SUBJECTS.map((s) => ({
+    id: `subj-sem5-${s.code}`,
+    semesterId: 'semester-5',
+    ...s,
+    createdAt: now,
+    updatedAt: now,
+  }));
+
+  if (force) {
+    // Upsert or overwrite default IDs
+    for (const sub of subjectsToInsert) {
+      await db().subjects.put(sub);
+    }
+  } else {
+    await db().subjects.bulkAdd(subjectsToInsert);
+  }
+}
+
+export async function seed5thSemesterRoutine(force = false): Promise<void> {
+  if (!force) {
+    const existingRoutineCount = await db().routine.where('semesterId').equals('semester-5').count();
+    if (existingRoutineCount > 0) return;
+  }
+
+  const subjects = await db().subjects.where('semesterId').equals('semester-5').toArray();
+  const subjectMap = new Map(subjects.map((s) => [s.code, s.id]));
+
+  const now = new Date();
+  const slotsToInsert = DEFAULT_5TH_SEMESTER_ROUTINE.map((r) => {
+    const subjectId = subjectMap.get(r.subjectCode);
+    if (!subjectId) return null;
+    return {
+      id: generateId(),
+      semesterId: 'semester-5',
+      subjectId,
+      dayOfWeek: r.dayOfWeek,
+      startTime: r.startTime,
+      endTime: r.endTime,
+      room: r.room,
+      teacher: r.teacher,
+      createdAt: now,
+    };
+  }).filter((s): s is NonNullable<typeof s> => s !== null);
+
+  if (slotsToInsert.length > 0) {
+    if (force) {
+      await db().routine.where('semesterId').equals('semester-5').delete();
+    }
+    await db().routine.bulkAdd(slotsToInsert);
+  }
 }
 
 async function seedSemesters(): Promise<void> {

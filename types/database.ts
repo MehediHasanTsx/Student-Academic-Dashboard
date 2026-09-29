@@ -69,6 +69,7 @@ export interface Subject {
   endTime?: string;    // HH:mm
   room?: string;
   color?: string;      // hex color
+  order?: number;      // display order
   createdAt: Date;
   updatedAt: Date;
 }

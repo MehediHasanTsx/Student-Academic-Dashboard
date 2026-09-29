@@ -7,6 +7,8 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 
+import { CloudSyncStatus } from '@/components/shared/cloud-sync-status';
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -30,19 +32,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Mobile Header */}
-        <header className="flex h-14 items-center gap-3 border-b border-border px-4 lg:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open navigation menu"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <span className="text-sm font-semibold">
-            DCC CSE
-          </span>
+        {/* Mobile Header with Sync Status */}
+        <header className="flex h-14 items-center justify-between border-b border-border px-4 lg:hidden">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open navigation menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <span className="text-sm font-semibold">
+              DCC CSE
+            </span>
+          </div>
+          <CloudSyncStatus variant="compact" />
         </header>
 
         {/* Page Content */}

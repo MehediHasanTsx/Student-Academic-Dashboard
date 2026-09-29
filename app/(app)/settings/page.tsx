@@ -7,7 +7,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useProfile } from '@/lib/hooks/useProfile';
 import { settingsService } from '@/lib/services/settings.service';
 import { backupService } from '@/lib/services/backup.service';
-import { cloudSyncService } from '@/lib/services/cloud-sync.service';
+import { CloudSyncStatus } from '@/components/shared/cloud-sync-status';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Settings, Moon, Sun, Monitor, Download, Upload, Trash2, User, GraduationCap, AlertTriangle, LogOut, Shield, Cloud } from 'lucide-react';
+import { Settings, Moon, Sun, Monitor, Download, Upload, Trash2, User, GraduationCap, AlertTriangle, LogOut, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Settings as SettingsType } from '@/types/database';
 
@@ -28,7 +28,6 @@ export default function SettingsPage() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     settingsService.get().then(setSettings);
@@ -212,28 +211,9 @@ export default function SettingsPage() {
           <CardDescription>Sync, export, import, or reset your academic data.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button
-            variant="outline"
-            onClick={async () => {
-              setSyncing(true);
-              try {
-                const ok = await cloudSyncService.uploadToServer();
-                if (ok) toast.success('Data synced to cloud successfully!');
-                else toast.error('Sync failed. Please try again.');
-              } catch {
-                toast.error('Sync failed. Please try again.');
-              } finally {
-                setSyncing(false);
-              }
-            }}
-            className="w-full"
-            disabled={syncing}
-          >
-            <Cloud className="mr-2 h-4 w-4" />
-            {syncing ? 'Syncing...' : 'Sync to Cloud Now'}
-          </Button>
+          <CloudSyncStatus variant="card" />
           <p className="text-xs text-muted-foreground text-center">
-            Your data auto-syncs to the cloud. Use this button to force a manual sync.
+            Your data auto-syncs to the cloud securely whenever you make edits.
           </p>
           <Separator />
           <div className="flex gap-2">
