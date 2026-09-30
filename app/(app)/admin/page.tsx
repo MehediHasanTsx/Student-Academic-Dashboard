@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { mainDataService } from '@/lib/services/main-data.service';
-import type { Subject, RoutineSlot, Exam, DayOfWeek, SubjectType } from '@/types/database';
+import type { Subject, RoutineSlot, Exam, DayOfWeek, SubjectType, ExamRoutineItem } from '@/types/database';
 import { DAYS_OF_WEEK, DAY_LABELS, SEMESTER_COUNT } from '@/lib/constants';
 import { formatTime, generateId } from '@/lib/utils/formatters';
 
@@ -50,6 +50,7 @@ export default function AdminPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [routine, setRoutine] = useState<RoutineSlot[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
+  const [examRoutines, setExamRoutines] = useState<ExamRoutineItem[]>([]);
 
   // Modals state
   const [subjectDialogOpen, setSubjectDialogOpen] = useState(false);
@@ -76,6 +77,7 @@ export default function AdminPage() {
       setSubjects(data.subjects || []);
       setRoutine(data.routine || []);
       setExams(data.exams || []);
+      setExamRoutines(data.examRoutines || []);
       setLastPublished(data.updatedAt ? new Date(data.updatedAt).toLocaleString() : null);
     } catch (err) {
       console.error(err);
@@ -104,6 +106,7 @@ export default function AdminPage() {
         subjects,
         routine,
         exams,
+        examRoutines,
       });
       setLastPublished(new Date(result.updatedAt).toLocaleString());
       toast.success(`Published Main Data for Semester ${selectedSemester} to Cloud!`);

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db/database';
-import type { MainData, Subject, RoutineSlot, Exam } from '@/types/database';
+import type { MainData, Subject, RoutineSlot, Exam, ExamRoutineItem, ScholarshipConfig, StudentResultRecord } from '@/types/database';
 import { generateId } from '@/lib/utils/formatters';
 
 export const mainDataService = {
@@ -22,7 +22,14 @@ export const mainDataService = {
    */
   async publishMainData(
     semesterId: string,
-    payload: { subjects: Subject[]; routine: RoutineSlot[]; exams: Exam[] }
+    payload: {
+      subjects: Subject[];
+      routine: RoutineSlot[];
+      exams?: Exam[];
+      examRoutines?: ExamRoutineItem[];
+      scholarshipConfig?: ScholarshipConfig;
+      scholarshipResults?: StudentResultRecord[];
+    }
   ): Promise<{ updatedAt: string }> {
     const res = await fetch('/api/main-data', {
       method: 'POST',
@@ -32,7 +39,10 @@ export const mainDataService = {
         semesterId,
         subjects: payload.subjects,
         routine: payload.routine,
-        exams: payload.exams,
+        exams: payload.exams || [],
+        examRoutines: payload.examRoutines,
+        scholarshipConfig: payload.scholarshipConfig,
+        scholarshipResults: payload.scholarshipResults,
       }),
     });
 
@@ -225,5 +235,32 @@ export const mainDataService = {
     });
 
     return { examCount: count };
+  },
+
+  /**
+   * Sync exam routines with Main Data.
+   */
+  async syncExamRoutinesWithMain(semesterId = 'semester-5'): Promise<{ count: number }> {
+    const main = await this.fetchMainData(semesterId);
+    if (!main || !main.examRoutines || !Array.isArray(main.examRoutines) || main.examRoutines.length === 0) {
+      return { count: 0 };
+    }
+
+    const routines = main.examRoutines;
+    const now = new Date();
+    let count = 0;
+
+    await db().transaction('rw', db().examRoutines, async () => {
+      for (const item of routines) {
+        await db().examRoutines.put({
+          ...item,
+          semesterId,
+          updatedAt: now,
+        });
+        count++;
+      }
+    });
+
+    return { count };
   },
 };

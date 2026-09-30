@@ -20,6 +20,7 @@ import {
   Settings,
   FlaskConical,
   ShieldCheck,
+  Award,
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { CloudSyncStatus } from '@/components/shared/cloud-sync-status';
@@ -41,6 +42,7 @@ const NAV_SECTIONS = [
       { label: 'Subjects', href: '/subjects', icon: BookOpen },
       { label: 'Attendance', href: '/attendance', icon: CheckSquare },
       { label: 'GPA / CGPA', href: '/gpa', icon: BarChart3 },
+      { label: 'Results & Scholarship', href: '/results', icon: Award },
       { label: 'Routine', href: '/routine', icon: Calendar },
     ],
   },
@@ -48,7 +50,7 @@ const NAV_SECTIONS = [
     label: 'Tracking',
     items: [
       { label: 'Assignments', href: '/assignments', icon: ClipboardList },
-      { label: 'Exams', href: '/exams', icon: GraduationCap },
+      { label: 'Exam Routine', href: '/exams', icon: GraduationCap },
       { label: 'Fees', href: '/fees', icon: DollarSign },
     ],
   },

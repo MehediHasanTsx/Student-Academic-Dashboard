@@ -4,7 +4,12 @@ import { mainData } from '@/lib/db/server/schema';
 import { validateSession } from '@/lib/auth/session';
 import { isDemoMode } from '@/lib/auth/demo';
 import { eq } from 'drizzle-orm';
-import { DEFAULT_5TH_SEMESTER_SUBJECTS, DEFAULT_5TH_SEMESTER_ROUTINE } from '@/lib/constants';
+import {
+  DEFAULT_5TH_SEMESTER_SUBJECTS,
+  DEFAULT_5TH_SEMESTER_ROUTINE,
+  DEFAULT_5TH_SEMESTER_EXAM_ROUTINE,
+  DEFAULT_SCHOLARSHIP_CONFIG,
+} from '@/lib/constants';
 
 function getDefaultFallback(semesterId = 'semester-5') {
   const subjects = DEFAULT_5TH_SEMESTER_SUBJECTS.map((s, idx) => ({
@@ -39,6 +44,9 @@ function getDefaultFallback(semesterId = 'semester-5') {
     subjects,
     routine,
     exams: [],
+    examRoutines: semesterId === 'semester-5' ? DEFAULT_5TH_SEMESTER_EXAM_ROUTINE : [],
+    scholarshipConfig: DEFAULT_SCHOLARSHIP_CONFIG,
+    scholarshipResults: [],
     updatedAt: new Date().toISOString(),
   };
 }
@@ -77,6 +85,9 @@ export async function GET(request: NextRequest) {
         subjects: row.subjects,
         routine: row.routine,
         exams: row.exams,
+        examRoutines: row.examRoutines || (semesterId === 'semester-5' ? DEFAULT_5TH_SEMESTER_EXAM_ROUTINE : []),
+        scholarshipConfig: row.scholarshipConfig || DEFAULT_SCHOLARSHIP_CONFIG,
+        scholarshipResults: row.scholarshipResults || [],
         updatedAt: row.updatedAt,
         updatedBy: row.updatedBy,
       },
@@ -107,11 +118,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { semesterId = 'semester-5', subjects, routine, exams } = body;
+    const {
+      semesterId = 'semester-5',
+      subjects,
+      routine,
+      exams,
+      examRoutines,
+      scholarshipConfig,
+      scholarshipResults,
+    } = body;
 
-    if (!Array.isArray(subjects) || !Array.isArray(routine) || !Array.isArray(exams)) {
+    if (!Array.isArray(subjects) || !Array.isArray(routine)) {
       return NextResponse.json(
-        { error: 'Invalid payload format: subjects, routine, and exams must be arrays.' },
+        { error: 'Invalid payload format: subjects and routine must be arrays.' },
         { status: 400 }
       );
     }
@@ -125,16 +144,22 @@ export async function POST(request: NextRequest) {
       .where(eq(mainData.id, semesterId))
       .limit(1);
 
+    const updatePayload: Record<string, unknown> = {
+      subjects,
+      routine,
+      exams: Array.isArray(exams) ? exams : [],
+      updatedAt: now,
+      updatedBy: session.user.id,
+    };
+
+    if (examRoutines !== undefined) updatePayload.examRoutines = examRoutines;
+    if (scholarshipConfig !== undefined) updatePayload.scholarshipConfig = scholarshipConfig;
+    if (scholarshipResults !== undefined) updatePayload.scholarshipResults = scholarshipResults;
+
     if (existing.length > 0) {
       await db
         .update(mainData)
-        .set({
-          subjects,
-          routine,
-          exams,
-          updatedAt: now,
-          updatedBy: session.user.id,
-        })
+        .set(updatePayload)
         .where(eq(mainData.id, semesterId));
     } else {
       await db.insert(mainData).values({
@@ -142,7 +167,10 @@ export async function POST(request: NextRequest) {
         semesterId,
         subjects,
         routine,
-        exams,
+        exams: Array.isArray(exams) ? exams : [],
+        examRoutines: Array.isArray(examRoutines) ? examRoutines : [],
+        scholarshipConfig: scholarshipConfig || DEFAULT_SCHOLARSHIP_CONFIG,
+        scholarshipResults: Array.isArray(scholarshipResults) ? scholarshipResults : [],
         updatedAt: now,
         updatedBy: session.user.id,
       });

@@ -214,6 +214,91 @@ export interface MetaRecord {
   value: string;
 }
 
+// ── Exam Routine System ──────────────────────────────
+export type ExamType = 'in_course' | 'semester_final' | 'nu_final';
+
+export interface SeatPlanRange {
+  room: string;
+  rollRange: string;
+  total?: number;
+}
+
+export interface ExamRoutineItem {
+  id: string;
+  semesterId: string;
+  examType: ExamType;
+  courseCode: string;
+  courseName: string;
+  date: string;       // YYYY-MM-DD
+  day: string;        // e.g. "Tuesday"
+  time: string;       // e.g. "12:30 pm – 2:30 pm"
+  examRoom: string;   // e.g. "641, 642 and 645"
+  seatPlan?: SeatPlanRange[];
+  instructions?: string;
+  session?: string;   // e.g. "2022-2023"
+  part?: string;      // e.g. "Part-III"
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// ── Results & Scholarship System ─────────────────────
+export interface StudentResultRecord {
+  id: string;
+  studentId: string;     // e.g. Roll number or User ID
+  studentName?: string;
+  rollNumber?: string;
+  semesterId: string;
+  subjectCode: string;
+  subjectName: string;
+  credits?: number;
+  // In-Course Exam Marks (e.g. 18/20)
+  inCourseMarks?: number;
+  inCourseTotal?: number;
+  inCourseMaxMarks?: number;
+  // Semester Final Marks (e.g. 68/80)
+  semesterFinalMarks?: number;
+  semesterFinalTotal?: number;
+  semesterFinalMaxMarks?: number;
+  // Combined result for scholarship ranking
+  combinedMarks?: number;
+  combinedTotal?: number;
+  combinedPercentage?: number;
+  // NU Final Official Result
+  nuGrade?: string;       // e.g. "A+", "A", "B+"
+  nuGradePoint?: number;  // e.g. 4.00, 3.75
+  remarks?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ScholarshipConfig {
+  id: string;             // 'scholarship-rules'
+  inCourseWeight: number; // e.g. 30 (%)
+  semesterFinalWeight: number; // e.g. 70 (%)
+  topCount: number;       // default 5
+  topStudentsCount?: number;
+  discountPercent: number;// default 50 (%)
+  scholarshipPercentage?: number;
+  minPassingMarks?: number;// default 40
+  updatedAt?: Date;
+}
+
+export interface StudentScholarshipStanding {
+  studentId: string;
+  rollNumber: string;
+  studentName: string;
+  semesterId: string;
+  totalInCourseMarks?: number;
+  totalSemesterFinalMarks?: number;
+  totalCombinedMarks: number;
+  maxPossibleMarks: number;
+  percentage: number;
+  combinedScore: number;
+  rank: number;
+  isEligibleForScholarship: boolean;
+  scholarshipPercentage?: number;
+}
+
 // ── User Role ─────────────────────────────────────────
 export type UserRole = 'admin' | 'student';
 
@@ -224,6 +309,10 @@ export interface MainData {
   subjects: Subject[];
   routine: RoutineSlot[];
   exams: Exam[];
+  examRoutines?: ExamRoutineItem[];
+  scholarshipResults?: StudentResultRecord[];
+  scholarshipConfig?: ScholarshipConfig;
   updatedAt?: string | Date;
   updatedBy?: string;
 }
+

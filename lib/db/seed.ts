@@ -8,6 +8,8 @@ import {
   SEMESTER_COUNT,
   DEFAULT_5TH_SEMESTER_SUBJECTS,
   DEFAULT_5TH_SEMESTER_ROUTINE,
+  DEFAULT_5TH_SEMESTER_EXAM_ROUTINE,
+  DEFAULT_SCHOLARSHIP_CONFIG,
 } from '@/lib/constants';
 import { generateId } from '@/lib/utils/formatters';
 import type { Settings } from '@/types/database';
@@ -21,6 +23,8 @@ export async function seedDatabase(): Promise<void> {
   await seedGradeScale();
   await seedSettings();
   await seedInitialMainData();
+  await seedExamRoutines();
+  await seedScholarshipConfig();
 }
 
 export async function seedInitialMainData(force = false): Promise<void> {
@@ -146,4 +150,33 @@ async function seedSettings(): Promise<void> {
   };
 
   await db().settings.add(settings);
+}
+
+export async function seedExamRoutines(force = false): Promise<void> {
+  const existingCount = await db().examRoutines.where('semesterId').equals('semester-5').count();
+  if (existingCount > 0 && !force) return;
+
+  if (force) {
+    await db().examRoutines.where('semesterId').equals('semester-5').delete();
+  }
+
+  const routines = DEFAULT_5TH_SEMESTER_EXAM_ROUTINE.map((r) => ({
+    ...r,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }));
+
+  for (const routine of routines) {
+    await db().examRoutines.put(routine);
+  }
+}
+
+export async function seedScholarshipConfig(force = false): Promise<void> {
+  const existing = await db().scholarshipConfig.get(DEFAULT_SCHOLARSHIP_CONFIG.id);
+  if (existing && !force) return;
+
+  await db().scholarshipConfig.put({
+    ...DEFAULT_SCHOLARSHIP_CONFIG,
+    updatedAt: new Date(),
+  });
 }

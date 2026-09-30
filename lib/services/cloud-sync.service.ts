@@ -33,6 +33,9 @@ export interface SyncData {
   notes: unknown[];
   settings: unknown[];
   projects: unknown[];
+  examRoutines?: unknown[];
+  studentResults?: unknown[];
+  scholarshipConfig?: unknown[];
 }
 
 export type SmartSyncResult =
@@ -94,6 +97,7 @@ async function exportSnapshot(): Promise<SyncData> {
     profile, semesters, subjects, attendance, results,
     gradeScale, fees, payments, routine, assignments,
     exams, notes, settings, projects,
+    examRoutines, studentResults, scholarshipConfig,
   ] = await Promise.all([
     db().profile.toArray(),
     db().semesters.toArray(),
@@ -109,12 +113,16 @@ async function exportSnapshot(): Promise<SyncData> {
     db().notes.toArray(),
     db().settings.toArray(),
     db().projects.toArray(),
+    db().examRoutines.toArray(),
+    db().studentResults.toArray(),
+    db().scholarshipConfig.toArray(),
   ]);
 
   return {
     profile, semesters, subjects, attendance, results,
     gradeScale, fees, payments, routine, assignments,
     exams, notes, settings, projects,
+    examRoutines, studentResults, scholarshipConfig,
   };
 }
 
@@ -128,6 +136,7 @@ async function importSnapshot(data: SyncData): Promise<void> {
         db().results, db().gradeScale, db().fees, db().payments,
         db().routine, db().assignments, db().exams, db().notes,
         db().settings, db().projects,
+        db().examRoutines, db().studentResults, db().scholarshipConfig,
       ],
       async () => {
         // Clear all tables first
@@ -146,6 +155,9 @@ async function importSnapshot(data: SyncData): Promise<void> {
           db().notes.clear(),
           db().settings.clear(),
           db().projects.clear(),
+          db().examRoutines.clear(),
+          db().studentResults.clear(),
+          db().scholarshipConfig.clear(),
         ]);
 
         // Import all data
@@ -163,6 +175,9 @@ async function importSnapshot(data: SyncData): Promise<void> {
         if (data.notes?.length) await db().notes.bulkAdd(data.notes as never[]);
         if (data.settings?.length) await db().settings.bulkAdd(data.settings as never[]);
         if (data.projects?.length) await db().projects.bulkAdd(data.projects as never[]);
+        if (data.examRoutines?.length) await db().examRoutines.bulkAdd(data.examRoutines as never[]);
+        if (data.studentResults?.length) await db().studentResults.bulkAdd(data.studentResults as never[]);
+        if (data.scholarshipConfig?.length) await db().scholarshipConfig.bulkAdd(data.scholarshipConfig as never[]);
       }
     );
   } finally {

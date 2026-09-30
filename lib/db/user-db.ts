@@ -15,6 +15,9 @@ import type {
   Settings,
   Project,
   MetaRecord,
+  ExamRoutineItem,
+  StudentResultRecord,
+  ScholarshipConfig,
 } from '@/types/database';
 
 // ── Type for User-Scoped Database ─────────────────────
@@ -35,6 +38,9 @@ export type UserDatabase = Dexie & {
   settings: EntityTable<Settings, 'id'>;
   projects: EntityTable<Project, 'id'>;
   meta: EntityTable<MetaRecord, 'id'>;
+  examRoutines: EntityTable<ExamRoutineItem, 'id'>;
+  studentResults: EntityTable<StudentResultRecord, 'id'>;
+  scholarshipConfig: EntityTable<ScholarshipConfig, 'id'>;
 };
 
 /**
@@ -64,6 +70,13 @@ export function createUserDatabase(userId: string): UserDatabase {
     settings: 'id',
     projects: 'id, semesterId, subjectId, language, createdAt, updatedAt, [semesterId+subjectId]',
     meta: 'id',
+  });
+
+  // Version 2: Add Exam Routines, Student Results, and Scholarship Rules
+  db.version(2).stores({
+    examRoutines: 'id, semesterId, examType, date, [semesterId+examType]',
+    studentResults: 'id, semesterId, studentId, subjectCode, [semesterId+subjectCode]',
+    scholarshipConfig: 'id',
   });
 
   return db;

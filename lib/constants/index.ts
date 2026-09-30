@@ -195,3 +195,96 @@ export const DEFAULT_5TH_SEMESTER_ROUTINE = [
   { subjectCode: '530207', dayOfWeek: 'thursday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Nadira Jahan Chowdhury' },
   { subjectCode: '530205', dayOfWeek: 'thursday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Shirin Aktar' },
 ];
+
+// ── Default 5th Semester In-Course Examination Routine (Official Notice) ─
+
+export const DEFAULT_5TH_SEMESTER_EXAM_ROUTINE = [
+  {
+    id: 'exam-sem5-incourse-530201',
+    semesterId: 'semester-5',
+    examType: 'in_course' as const,
+    courseCode: '530201',
+    courseName: 'Peripheral and Interfacing',
+    date: '2026-10-06',
+    day: 'Tuesday',
+    time: '12:30 pm – 2:30 pm',
+    examRoom: '641, 642 and 645',
+    session: '2022-2023',
+    part: 'Part-III',
+    instructions: 'The classes will remain suspended from 6 October, 2026 to 14 October, 2026 and will resume from 15 October, 2026 as per existing routine.',
+    seatPlan: [
+      { room: '641', rollRange: '2-60', total: 41 },
+      { room: '642', rollRange: '64-126', total: 42 },
+      { room: '645', rollRange: '127-193', total: 41 },
+    ],
+  },
+  {
+    id: 'exam-sem5-incourse-530203',
+    semesterId: 'semester-5',
+    examType: 'in_course' as const,
+    courseCode: '530203',
+    courseName: 'Data and Telecommunication',
+    date: '2026-10-08',
+    day: 'Thursday',
+    time: '12:30 pm – 2:30 pm',
+    examRoom: '641, 642 and 645',
+    session: '2022-2023',
+    part: 'Part-III',
+    instructions: 'The classes will remain suspended from 6 October, 2026 to 14 October, 2026 and will resume from 15 October, 2026 as per existing routine.',
+    seatPlan: [
+      { room: '641', rollRange: '2-60', total: 41 },
+      { room: '642', rollRange: '64-126', total: 42 },
+      { room: '645', rollRange: '127-193', total: 41 },
+    ],
+  },
+  {
+    id: 'exam-sem5-incourse-530205',
+    semesterId: 'semester-5',
+    examType: 'in_course' as const,
+    courseCode: '530205',
+    courseName: 'Operating System',
+    date: '2026-10-12',
+    day: 'Monday',
+    time: '12:30 pm – 2:30 pm',
+    examRoom: '641, 642 and 645',
+    session: '2022-2023',
+    part: 'Part-III',
+    instructions: 'The classes will remain suspended from 6 October, 2026 to 14 October, 2026 and will resume from 15 October, 2026 as per existing routine.',
+    seatPlan: [
+      { room: '641', rollRange: '2-60', total: 41 },
+      { room: '642', rollRange: '64-126', total: 42 },
+      { room: '645', rollRange: '127-193', total: 41 },
+    ],
+  },
+  {
+    id: 'exam-sem5-incourse-530207',
+    semesterId: 'semester-5',
+    examType: 'in_course' as const,
+    courseCode: '530207',
+    courseName: 'Economics',
+    date: '2026-10-14',
+    day: 'Wednesday',
+    time: '12:30 pm – 2:30 pm',
+    examRoom: '641, 642 and 645',
+    session: '2022-2023',
+    part: 'Part-III',
+    instructions: 'The classes will remain suspended from 6 October, 2026 to 14 October, 2026 and will resume from 15 October, 2026 as per existing routine.',
+    seatPlan: [
+      { room: '641', rollRange: '2-60', total: 41 },
+      { room: '642', rollRange: '64-126', total: 42 },
+      { room: '645', rollRange: '127-193', total: 41 },
+    ],
+  },
+];
+
+export const DEFAULT_SCHOLARSHIP_CONFIG = {
+  id: 'scholarship-config-default',
+  inCourseWeight: 30, // 30%
+  semesterFinalWeight: 70, // 70%
+  topCount: 5,
+  topStudentsCount: 5,
+  discountPercent: 50,
+  scholarshipPercentage: 50, // 50% discount
+  minPassingMarks: 40,
+};
+

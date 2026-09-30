@@ -75,6 +75,9 @@ export const mainData = pgTable('main_data', {
   subjects: jsonb('subjects').notNull().default([]),
   routine: jsonb('routine').notNull().default([]),
   exams: jsonb('exams').notNull().default([]),
+  examRoutines: jsonb('exam_routines').notNull().default([]),
+  scholarshipResults: jsonb('scholarship_results').notNull().default([]),
+  scholarshipConfig: jsonb('scholarship_config').notNull().default({}),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   updatedBy: uuid('updated_by').references(() => users.id),
 });
