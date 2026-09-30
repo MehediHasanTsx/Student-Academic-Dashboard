@@ -5,7 +5,6 @@ import { useProfile } from '@/lib/hooks/useProfile';
 import { useSubjects } from '@/lib/hooks/useSubjects';
 import { examRoutineService } from '@/lib/services/exam-routine.service';
 import { examService } from '@/lib/services/exam.service';
-import { mainDataService } from '@/lib/services/main-data.service';
 import { formatDate } from '@/lib/utils/formatters';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,7 +47,6 @@ import {
   GraduationCap,
   Clock,
   RefreshCw,
-  CloudDownload,
   Calendar,
   Search,
   MapPin,
@@ -141,20 +139,6 @@ export default function ExamsPage() {
       toast.success('Official routine restored successfully.');
     } catch {
       toast.error('Failed to reset routine.');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const handleSyncWithMain = async () => {
-    try {
-      setIsSyncing(true);
-      const res = await mainDataService.syncExamRoutinesWithMain(semesterId);
-      await loadExamRoutines();
-      toast.success(`Exam routines synced with Main (${res.count} updated).`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to sync with Main';
-      toast.error(msg);
     } finally {
       setIsSyncing(false);
     }
@@ -263,61 +247,53 @@ export default function ExamsPage() {
             </SelectContent>
           </Select>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSyncWithMain}
-            disabled={isSyncing}
-            className="text-xs gap-1.5"
-            title="Sync with Main server"
-          >
-            {isSyncing ? (
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <CloudDownload className="h-3.5 w-3.5 text-primary" />
-            )}
-            Sync
-          </Button>
-
-          {selectedSemester === 5 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetToOfficial}
-              disabled={isSyncing}
-              className="text-xs gap-1.5"
-              title="Reset to official DCC In-Course Notice"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Reset Official
-            </Button>
+          {!isAdmin && (
+            <Badge variant="outline" className="text-xs border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 py-1 px-2.5">
+              Official Department Routine · Published by Admin
+            </Badge>
           )}
 
           {isAdmin && (
-            <Button
-              size="sm"
-              className="text-xs gap-1.5"
-              onClick={() => {
-                setEditingRoutine({
-                  semesterId,
-                  examType: selectedExamType,
-                  courseCode: '',
-                  courseName: '',
-                  date: today,
-                  day: 'Monday',
-                  time: '12:30 pm – 2:30 pm',
-                  examRoom: '641, 642 and 645',
-                  session: noticeSession,
-                  part: noticePart,
-                  instructions: noticeInstruction,
-                  seatPlan: currentSeatPlan,
-                });
-                setRoutineModalOpen(true);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Exam Slot
-            </Button>
+            <>
+              {selectedSemester === 5 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetToOfficial}
+                  disabled={isSyncing}
+                  className="text-xs gap-1.5"
+                  title="Admin: Reset to default DCC notice template"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Reset Template
+                </Button>
+              )}
+
+              <Button
+                size="sm"
+                className="text-xs gap-1.5"
+                onClick={() => {
+                  setEditingRoutine({
+                    semesterId,
+                    examType: selectedExamType,
+                    courseCode: '',
+                    courseName: '',
+                    date: today,
+                    day: 'Monday',
+                    time: '12:30 pm – 2:30 pm',
+                    examRoom: '641, 642 and 645',
+                    session: noticeSession,
+                    part: noticePart,
+                    instructions: noticeInstruction,
+                    seatPlan: currentSeatPlan,
+                  });
+                  setRoutineModalOpen(true);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Exam Schedule
+              </Button>
+            </>
           )}
         </div>
       </div>

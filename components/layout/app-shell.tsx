@@ -18,13 +18,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:shrink-0">
+      <aside className="hidden lg:flex lg:w-72 lg:shrink-0">
         <Sidebar />
       </aside>
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-72 max-w-[85vw] p-0 h-dvh max-h-dvh flex flex-col overflow-hidden">
           <SheetTitle className="sr-only">Navigation menu</SheetTitle>
           <Sidebar onNavigate={() => setMobileOpen(false)} />
         </SheetContent>

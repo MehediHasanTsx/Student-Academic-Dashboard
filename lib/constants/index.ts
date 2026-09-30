@@ -169,31 +169,71 @@ export const DEFAULT_5TH_SEMESTER_SUBJECTS = [
   },
 ];
 
+export const DEFAULT_5TH_SEMESTER_ROUTINE_META = {
+  title: '5th Semester Class Routine (Revised)',
+  session: '2022-2023',
+  part: 'Part-III',
+  effectiveDate: '29th September, 2026',
+  section: 'Section B (Roll: 89- 193)',
+  room: '641',
+  labGroups: [
+    { group: 'P', rollRange: '2-65', label: 'Group P (Roll 2–65)' },
+    { group: 'Q', rollRange: '66-126', label: 'Group Q (Roll 66–126)' },
+    { group: 'R', rollRange: '127-193', label: 'Group R (Roll 127–193)' },
+  ],
+};
+
+export const ROUTINE_TEACHER_LEGEND = [
+  { code: 'MK', name: 'Md. Mustafa Kamal', subjectCodes: ['530201', '530202'] },
+  { code: 'ST', name: 'Md. Shahiduzzaman Torun', subjectCodes: ['530202'] },
+  { code: 'SU', name: 'Sheuli Saha', subjectCodes: ['530202'] },
+  { code: 'NM', name: 'Nudar Mawla', subjectCodes: ['530203', '530204'] },
+  { code: 'SP', name: 'Salma Parvin', subjectCodes: ['530204'] },
+  { code: 'SA', name: 'Shirin Aktar', subjectCodes: ['530205', '530206'] },
+  { code: 'SHS', name: 'Shamima Sultana', subjectCodes: ['530206'] },
+  { code: 'MR', name: 'Md. Mustafizur Rahman', subjectCodes: ['530206'] },
+  { code: 'NC', name: 'Nadira Jahan Chowdhury', subjectCodes: ['530207'] },
+  { code: 'JF', name: 'Jannatul Ferdoushi', subjectCodes: ['530207'] },
+];
+
 export const DEFAULT_5TH_SEMESTER_ROUTINE = [
-  // Sunday
-  { subjectCode: '530204', dayOfWeek: 'sunday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '533', teacher: 'Salma Parvin' },
-  { subjectCode: '530205', dayOfWeek: 'sunday' as DayOfWeek, startTime: '12:20', endTime: '13:00', room: '641', teacher: 'Shirin Aktar' },
-  { subjectCode: '530203', dayOfWeek: 'sunday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Nudar Mawla' },
-  { subjectCode: '530201', dayOfWeek: 'sunday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Md. Mustafa Kamal' },
-  { subjectCode: '530202', dayOfWeek: 'sunday' as DayOfWeek, startTime: '14:30', endTime: '15:30', room: '431', teacher: 'Sheuli Saha' },
+  // ── Sunday ──
+  // 10:40 - 12:00 (Labs: Group P & Group R)
+  { subjectCode: '530204', dayOfWeek: 'sunday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '533', teacher: 'Salma Parvin (SP)', group: 'P', section: 'B' },
+  { subjectCode: '530202', dayOfWeek: 'sunday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '431', teacher: 'Mustafa Kamal (MK)', group: 'R', section: 'B' },
+  // Theory in Room 641
+  { subjectCode: '530205', dayOfWeek: 'sunday' as DayOfWeek, startTime: '12:20', endTime: '13:00', room: '641', teacher: 'Shirin Aktar (SA)', group: 'All', section: 'B' },
+  { subjectCode: '530203', dayOfWeek: 'sunday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Nudar Mawla (NM)', group: 'All', section: 'B' },
+  { subjectCode: '530201', dayOfWeek: 'sunday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Md. Mustafa Kamal (MK)', group: 'All', section: 'B' },
+  // 2:30 - 3:30 (Lab: Group Q)
+  { subjectCode: '530202', dayOfWeek: 'sunday' as DayOfWeek, startTime: '14:30', endTime: '15:30', room: '431', teacher: 'Md. Shahiduzzaman Torun (ST)', group: 'Q', section: 'B' },
 
-  // Monday
-  { subjectCode: '530203', dayOfWeek: 'monday' as DayOfWeek, startTime: '12:20', endTime: '13:00', room: '641', teacher: 'Nudar Mawla' },
-  { subjectCode: '530207', dayOfWeek: 'monday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Nadira Jahan Chowdhury' },
-  { subjectCode: '530201', dayOfWeek: 'monday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Md. Mustafa Kamal' },
-  { subjectCode: '530204', dayOfWeek: 'monday' as DayOfWeek, startTime: '14:30', endTime: '15:30', room: '422', teacher: 'Salma Parvin' },
+  // ── Monday ──
+  // Theory in Room 641
+  { subjectCode: '530203', dayOfWeek: 'monday' as DayOfWeek, startTime: '12:20', endTime: '13:00', room: '641', teacher: 'Nudar Mawla (NM)', group: 'All', section: 'B' },
+  { subjectCode: '530207', dayOfWeek: 'monday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Nadira Jahan Chowdhury (NC)', group: 'All', section: 'B' },
+  { subjectCode: '530201', dayOfWeek: 'monday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Md. Mustafa Kamal (MK)', group: 'All', section: 'B' },
+  // 2:30 - 3:30 (Lab: Group R)
+  { subjectCode: '530204', dayOfWeek: 'monday' as DayOfWeek, startTime: '14:30', endTime: '15:30', room: '422', teacher: 'Salma Parvin (SP)', group: 'R', section: 'B' },
 
-  // Wednesday
-  { subjectCode: '530202', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '431', teacher: 'Sheuli Saha' },
-  { subjectCode: '530207', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '12:20', endTime: '13:00', room: '641', teacher: 'Jannatul Ferdoushi' },
-  { subjectCode: '530205', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Shirin Aktar' },
-  { subjectCode: '530201', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Md. Mustafa Kamal' },
+  // ── Wednesday ──
+  // 10:40 - 12:00 (Labs: Group P & Group Q)
+  { subjectCode: '530202', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '431', teacher: 'Sheuli Saha (SU)', group: 'P', section: 'B' },
+  { subjectCode: '530206', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '422', teacher: 'Md. Mustafizur Rahman (MR)', group: 'Q', section: 'B' },
+  // Theory in Room 641
+  { subjectCode: '530207', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '12:20', endTime: '13:00', room: '641', teacher: 'Jannatul Ferdoushi (JF)', group: 'All', section: 'B' },
+  { subjectCode: '530205', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Shirin Aktar (SA)', group: 'All', section: 'B' },
+  { subjectCode: '530201', dayOfWeek: 'wednesday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Md. Mustafa Kamal (MK)', group: 'All', section: 'B' },
 
-  // Thursday
-  { subjectCode: '530206', dayOfWeek: 'thursday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '422', teacher: 'Shamima Sultana' },
-  { subjectCode: '530203', dayOfWeek: 'thursday' as DayOfWeek, startTime: '12:20', endTime: '13:00', room: '641', teacher: 'Nudar Mawla' },
-  { subjectCode: '530207', dayOfWeek: 'thursday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Nadira Jahan Chowdhury' },
-  { subjectCode: '530205', dayOfWeek: 'thursday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Shirin Aktar' },
+  // ── Thursday ──
+  // 10:40 - 12:00 (Labs: Group P, Group R, Group Q)
+  { subjectCode: '530206', dayOfWeek: 'thursday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '422', teacher: 'Shamima Sultana (SHS)', group: 'P', section: 'B' },
+  { subjectCode: '530206', dayOfWeek: 'thursday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '423', teacher: 'Shirin Aktar (SA)', group: 'R', section: 'B' },
+  { subjectCode: '530204', dayOfWeek: 'thursday' as DayOfWeek, startTime: '10:40', endTime: '12:00', room: '321', teacher: 'Nudar Mawla (NM)', group: 'Q', section: 'B' },
+  // Theory in Room 641
+  { subjectCode: '530203', dayOfWeek: 'thursday' as DayOfWeek, startTime: '12:20', endTime: '13:00', room: '641', teacher: 'Nudar Mawla (NM)', group: 'All', section: 'B' },
+  { subjectCode: '530207', dayOfWeek: 'thursday' as DayOfWeek, startTime: '13:00', endTime: '13:40', room: '641', teacher: 'Nadira Jahan Chowdhury (NC)', group: 'All', section: 'B' },
+  { subjectCode: '530205', dayOfWeek: 'thursday' as DayOfWeek, startTime: '13:40', endTime: '14:20', room: '641', teacher: 'Shirin Aktar (SA)', group: 'All', section: 'B' },
 ];
 
 // ── Default 5th Semester In-Course Examination Routine (Official Notice) ─

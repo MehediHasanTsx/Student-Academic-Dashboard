@@ -154,17 +154,17 @@ export function CloudSyncStatus({
           {isSyncing ? 'Synchronizing...' : 'Smart Sync (Auto)'}
         </Button>
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-2 pt-0.5">
           <Button
             variant="secondary"
             size="sm"
             onClick={handleForceUpload}
             disabled={isSyncing}
-            title="Send this device's data to cloud"
-            className="h-7 text-[0.7rem] font-medium"
+            title="Upload this device's data to cloud backup"
+            className="h-7.5 px-2 text-[0.7rem] font-medium flex items-center justify-center gap-1 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
           >
-            <CloudUpload className="h-3 w-3 mr-1 text-emerald-600 dark:text-emerald-400" />
-            Upload to Cloud
+            <CloudUpload className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="truncate">Upload Cloud</span>
           </Button>
 
           <Button
@@ -172,11 +172,11 @@ export function CloudSyncStatus({
             size="sm"
             onClick={handleForceDownload}
             disabled={isSyncing}
-            title="Pull latest cloud backup into this device"
-            className="h-7 text-[0.7rem] font-medium"
+            title="Download latest cloud backup to this device"
+            className="h-7.5 px-2 text-[0.7rem] font-medium flex items-center justify-center gap-1 hover:bg-sky-500/10 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
           >
-            <CloudDownload className="h-3 w-3 mr-1 text-sky-600 dark:text-sky-400" />
-            Download Cloud
+            <CloudDownload className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+            <span className="truncate">Download Cloud</span>
           </Button>
         </div>
       </div>

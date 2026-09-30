@@ -160,6 +160,8 @@ export const mainDataService = {
         endTime: r.endTime,
         room: r.room,
         teacher: r.teacher,
+        group: r.group,
+        section: r.section,
         createdAt: now,
       });
     }

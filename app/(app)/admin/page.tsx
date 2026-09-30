@@ -512,8 +512,13 @@ export default function AdminPage() {
                                 <Clock className="h-3 w-3" />
                                 <span>{formatTime(slot.startTime)} - {formatTime(slot.endTime)}</span>
                               </div>
-                              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                              <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
                                 {slot.room && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Room {slot.room}</Badge>}
+                                {slot.group && slot.group !== 'All' && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">
+                                    Group {slot.group}
+                                  </Badge>
+                                )}
                                 {slot.teacher && <span>Teacher: {slot.teacher}</span>}
                               </div>
                             </div>
@@ -783,6 +788,8 @@ function RoutineFormModal({
   const [endTime, setEndTime] = useState(slot?.endTime || '10:30');
   const [room, setRoom] = useState(slot?.room || '');
   const [teacher, setTeacher] = useState(slot?.teacher || '');
+  const [group, setGroup] = useState(slot?.group || 'All');
+  const [section, setSection] = useState(slot?.section || 'B');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -794,6 +801,8 @@ function RoutineFormModal({
       endTime,
       room: room.trim() || undefined,
       teacher: teacher.trim() || undefined,
+      group: group || undefined,
+      section: section.trim() || undefined,
     });
   };
 
@@ -812,16 +821,30 @@ function RoutineFormModal({
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
-        <Label>Day *</Label>
-        <Select value={dayOfWeek} onValueChange={(v) => { if (v) setDayOfWeek(v as DayOfWeek); }}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {DAYS_OF_WEEK.map((d) => (
-              <SelectItem key={d} value={d}>{DAY_LABELS[d]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Day *</Label>
+          <Select value={dayOfWeek} onValueChange={(v) => { if (v) setDayOfWeek(v as DayOfWeek); }}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {DAYS_OF_WEEK.map((d) => (
+                <SelectItem key={d} value={d}>{DAY_LABELS[d]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Lab Group</Label>
+          <Select value={group} onValueChange={(val) => { if (val) setGroup(val); }}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All / Theory (Everyone)</SelectItem>
+              <SelectItem value="P">Group P (Roll 2–65)</SelectItem>
+              <SelectItem value="Q">Group Q (Roll 66–126)</SelectItem>
+              <SelectItem value="R">Group R (Roll 127–193)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
@@ -833,14 +856,18 @@ function RoutineFormModal({
           <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">
           <Label>Room</Label>
-          <Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. 704" />
+          <Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. 641, 533" />
         </div>
         <div className="space-y-2">
-          <Label>Teacher</Label>
-          <Input value={teacher} onChange={(e) => setTeacher(e.target.value)} placeholder="e.g. MK" />
+          <Label>Section</Label>
+          <Input value={section} onChange={(e) => setSection(e.target.value)} placeholder="e.g. B" />
+        </div>
+        <div className="space-y-2">
+          <Label>Teacher / Initials</Label>
+          <Input value={teacher} onChange={(e) => setTeacher(e.target.value)} placeholder="e.g. SP" />
         </div>
       </div>
       <DialogFooter>

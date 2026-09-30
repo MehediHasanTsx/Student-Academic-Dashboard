@@ -69,9 +69,9 @@ export function Sidebar({ onNavigate }: SidebarProps) {
   const { isAdmin } = useAuth();
 
   return (
-    <div className="flex h-full w-full flex-col border-r border-border bg-sidebar">
+    <div className="flex h-full w-full flex-col border-r border-border bg-sidebar overflow-hidden">
       {/* Logo */}
-      <div className="flex h-14 items-center px-5">
+      <div className="flex h-14 shrink-0 items-center px-5">
         <Link
           href="/"
           className="flex items-center gap-2.5"
@@ -91,115 +91,120 @@ export function Sidebar({ onNavigate }: SidebarProps) {
         </Link>
       </div>
 
-      <Separator />
+      <Separator className="shrink-0" />
 
       {/* Semester Switcher */}
-      <div className="px-3 py-3">
+      <div className="shrink-0 px-3 py-3">
         <SemesterSwitcher />
       </div>
 
-      <Separator />
+      <Separator className="shrink-0" />
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-2">
-        <nav>
-          {isAdmin && (
-            <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-1.5">
-              <p className="mb-1 px-2 text-[0.65rem] font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
-                <ShieldCheck className="h-3 w-3" />
-                Admin Controls
-              </p>
+      {/* Scrollable Navigation & Actions */}
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="flex min-h-full flex-col justify-between p-3">
+          <nav>
+            {isAdmin && (
+              <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-1.5">
+                <p className="mb-1 px-2 text-[0.65rem] font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
+                  <ShieldCheck className="h-3 w-3" />
+                  Admin Controls
+                </p>
+                <Link
+                  href="/admin"
+                  onClick={onNavigate}
+                  className={cn(
+                    'flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                    pathname.startsWith('/admin')
+                      ? 'bg-primary text-primary-foreground shadow-xs'
+                      : 'text-foreground/80 hover:bg-primary/10 hover:text-foreground'
+                  )}
+                >
+                  <span>Main Data Editor</span>
+                  <span className="rounded bg-primary/20 px-1 py-0.5 text-[9px] uppercase tracking-wider text-primary dark:text-primary-foreground">
+                    Admin
+                  </span>
+                </Link>
+              </div>
+            )}
+            {NAV_SECTIONS.map((section) => (
+              <div key={section.label} className="mb-4">
+                <p className="mb-1 px-3 text-[0.65rem] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {section.label}
+                </p>
+                <ul className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const isActive =
+                      item.href === '/'
+                        ? pathname === '/'
+                        : pathname.startsWith(item.href);
+
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={onNavigate}
+                          className={cn(
+                            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                            isActive
+                              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                              : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                          )}
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </nav>
+
+          {/* Bottom Section: Cloud Sync, Settings, Developer Credit */}
+          <div className="pt-2 pb-8 space-y-3">
+            <Separator className="my-2" />
+
+            {/* Cloud Sync Status */}
+            <div>
+              <CloudSyncStatus variant="card" />
+            </div>
+
+            {/* Settings */}
+            <div>
               <Link
-                href="/admin"
+                href="/settings"
                 onClick={onNavigate}
                 className={cn(
-                  'flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors',
-                  pathname.startsWith('/admin')
-                    ? 'bg-primary text-primary-foreground shadow-xs'
-                    : 'text-foreground/80 hover:bg-primary/10 hover:text-foreground'
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                  pathname.startsWith('/settings')
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 )}
               >
-                <span>Main Data Editor</span>
-                <span className="rounded bg-primary/20 px-1 py-0.5 text-[9px] uppercase tracking-wider text-primary dark:text-primary-foreground">
-                  Admin
-                </span>
+                <Settings className="h-4 w-4 shrink-0" />
+                <span>Settings</span>
               </Link>
             </div>
-          )}
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.label} className="mb-4">
-              <p className="mb-1 px-3 text-[0.65rem] font-semibold uppercase tracking-widest text-muted-foreground">
-                {section.label}
+
+            {/* Developer Credit */}
+            <div className="px-3 pt-1">
+              <p className="text-[0.6rem] text-muted-foreground/60 text-center">
+                Built by{' '}
+                <a
+                  href="https://api.whatsapp.com/send/?phone=8801521743944&text&type=phone_number&app_absent=0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2 hover:text-muted-foreground transition-colors"
+                >
+                  Mehedi Hasan
+                </a>
               </p>
-              <ul className="space-y-0.5">
-                {section.items.map((item) => {
-                  const isActive =
-                    item.href === '/'
-                      ? pathname === '/'
-                      : pathname.startsWith(item.href);
-
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        onClick={onNavigate}
-                        className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-                          isActive
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                            : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                        )}
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        <span>{item.label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
             </div>
-          ))}
-        </nav>
+          </div>
+        </div>
       </ScrollArea>
-
-      <Separator />
-
-      {/* Cloud Sync Status */}
-      <div className="px-3 pt-3">
-        <CloudSyncStatus variant="card" />
-      </div>
-
-      {/* Settings */}
-      <div className="p-3">
-        <Link
-          href="/settings"
-          onClick={onNavigate}
-          className={cn(
-            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-            pathname.startsWith('/settings')
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-              : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          )}
-        >
-          <Settings className="h-4 w-4 shrink-0" />
-          <span>Settings</span>
-        </Link>
-      </div>
-
-      {/* Developer Credit */}
-      <div className="px-6 pb-3">
-        <p className="text-[0.6rem] text-muted-foreground/60 text-center">
-          Built by{' '}
-          <a
-            href="https://api.whatsapp.com/send/?phone=8801521743944&text&type=phone_number&app_absent=0"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-2 hover:text-muted-foreground transition-colors"
-          >
-            Mehedi Hasan
-          </a>
-        </p>
-      </div>
     </div>
   );
 }

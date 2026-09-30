@@ -343,19 +343,21 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
 
-        {/* Combined Academic Score */}
+        {/* Total Marks (Two Exams) */}
         <Card>
           <CardHeader className="p-4 pb-2">
             <CardDescription className="text-xs flex items-center justify-between">
-              <span>Combined Score</span>
+              <span>Total Marks (2 Exams)</span>
               <Percent className="h-4 w-4 text-primary" />
             </CardDescription>
             <CardTitle className="text-xl font-bold">
-              {myStanding ? `${myStanding.combinedScore}%` : 'N/A'}
+              {myStanding ? `${myStanding.totalCombinedMarks} / ${myStanding.maxPossibleMarks}` : 'N/A'}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-1 text-xs text-muted-foreground">
-            {scholarshipConfig?.inCourseWeight || 30}% In-Course + {scholarshipConfig?.semesterFinalWeight || 70}% Sem Final
+            {myStanding
+              ? `In-Course: ${myStanding.totalInCourseMarks} + Final: ${myStanding.totalSemesterFinalMarks} (${myStanding.percentage}%)`
+              : 'In-Course + Sem Final Total'}
           </CardContent>
         </Card>
 
@@ -432,8 +434,7 @@ export default function ResultsPage() {
                   DCC CSE Department Merit Scholarship Policy
                 </p>
                 <p className="text-amber-800/90 dark:text-amber-300/80 mt-0.5 leading-relaxed">
-                  Calculated based on <strong>{scholarshipConfig?.inCourseWeight || 30}% In-Course</strong> +{' '}
-                  <strong>{scholarshipConfig?.semesterFinalWeight || 70}% Semester Final</strong> marks.
+                  Ranked by <strong>Total Obtained Marks</strong> from the two internal exams (<strong>In-Course Exam + Semester Final Exam</strong>).
                   The <strong>Top {scholarshipConfig?.topStudentsCount || 5} students</strong> in the semester earn a{' '}
                   <strong>{scholarshipConfig?.scholarshipPercentage || 50}% fee waiver</strong> for the next semester!
                 </p>
@@ -471,8 +472,8 @@ export default function ResultsPage() {
                     <th className="py-3 px-4">Student</th>
                     <th className="py-3 px-4 w-27.5">Roll</th>
                     <th className="py-3 px-4 text-right w-30">In-Course Tot</th>
-                    <th className="py-3 px-4 text-right w-30">Final Tot</th>
-                    <th className="py-3 px-4 text-right w-32.5">Combined Score</th>
+                    <th className="py-3 px-4 text-right w-30">Sem Final Tot</th>
+                    <th className="py-3 px-4 text-right w-35">Total Marks</th>
                     <th className="py-3 px-4 text-center w-35">Scholarship</th>
                   </tr>
                 </thead>
@@ -539,8 +540,9 @@ export default function ResultsPage() {
                           <td className="py-3.5 px-4 text-right font-mono">
                             {st.totalSemesterFinalMarks}
                           </td>
-                          <td className="py-3.5 px-4 text-right font-bold text-primary font-mono">
-                            {st.combinedScore}%
+                          <td className="py-3.5 px-4 text-right font-mono">
+                            <span className="font-bold text-primary text-sm">{st.totalCombinedMarks}</span>
+                            <span className="text-[11px] text-muted-foreground ml-1">/ {st.maxPossibleMarks} ({st.percentage}%)</span>
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             {st.isEligibleForScholarship ? (

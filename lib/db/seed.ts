@@ -95,6 +95,8 @@ export async function seed5thSemesterRoutine(force = false): Promise<void> {
       endTime: r.endTime,
       room: r.room,
       teacher: r.teacher,
+      group: r.group,
+      section: r.section,
       createdAt: now,
     };
   }).filter((s): s is NonNullable<typeof s> => s !== null);

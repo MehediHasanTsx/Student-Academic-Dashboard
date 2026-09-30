@@ -135,6 +135,8 @@ export interface RoutineSlot {
   room?: string;
   startTime: string;   // HH:mm
   endTime: string;     // HH:mm
+  group?: string;      // e.g. 'P' | 'Q' | 'R' | 'All'
+  section?: string;    // e.g. 'B'
   createdAt: Date;
 }
 

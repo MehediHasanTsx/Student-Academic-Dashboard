@@ -36,6 +36,8 @@ function getDefaultFallback(semesterId = 'semester-5') {
     endTime: r.endTime,
     room: r.room,
     teacher: r.teacher,
+    group: r.group,
+    section: r.section,
   }));
 
   return {

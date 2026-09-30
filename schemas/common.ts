@@ -9,6 +9,8 @@ export const routineSlotSchema = z.object({
   room: z.string().max(50).optional().or(z.literal('')),
   startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().min(1, 'End time is required'),
+  group: z.string().max(20).optional().or(z.literal('')),
+  section: z.string().max(20).optional().or(z.literal('')),
 });
 
 export const assignmentSchema = z.object({

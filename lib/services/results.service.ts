@@ -163,18 +163,13 @@ export const resultsService = {
       studentMap.set(r.studentId, entry);
     }
 
-    const inWeight = config.inCourseWeight / 100;
-    const finalWeight = config.semesterFinalWeight / 100;
-
     const standings: StudentScholarshipStanding[] = [];
 
     for (const [, st] of studentMap.entries()) {
-      // Calculate normalized percentage (0 - 100) for each part
-      const inCoursePct = st.inCourseMax > 0 ? (st.inCourseTotal / st.inCourseMax) * 100 : 0;
-      const semFinalPct = st.semesterFinalMax > 0 ? (st.semesterFinalTotal / st.semesterFinalMax) * 100 : 0;
-
-      // Combined score: weighted sum
-      const combinedScore = round(inCoursePct * inWeight + semFinalPct * finalWeight, 2);
+      // Total mark is the direct sum of the two exams: In-Course + Semester Final
+      const totalMarks = round(st.inCourseTotal + st.semesterFinalTotal, 1);
+      const maxMarks = st.inCourseMax + st.semesterFinalMax;
+      const percentage = maxMarks > 0 ? round((totalMarks / maxMarks) * 100, 2) : 0;
 
       standings.push({
         studentId: st.studentId,
@@ -183,18 +178,18 @@ export const resultsService = {
         semesterId,
         totalInCourseMarks: round(st.inCourseTotal, 1),
         totalSemesterFinalMarks: round(st.semesterFinalTotal, 1),
-        totalCombinedMarks: round(st.inCourseTotal + st.semesterFinalTotal, 1),
-        maxPossibleMarks: st.inCourseMax + st.semesterFinalMax,
-        percentage: combinedScore,
-        combinedScore,
+        totalCombinedMarks: totalMarks,
+        maxPossibleMarks: maxMarks,
+        percentage,
+        combinedScore: totalMarks,
         rank: 0,
         isEligibleForScholarship: false,
         scholarshipPercentage: 0,
       });
     }
 
-    // Sort descending by combinedScore
-    standings.sort((a, b) => b.combinedScore - a.combinedScore);
+    // Sort descending primarily by total combined marks of the two exams
+    standings.sort((a, b) => b.totalCombinedMarks - a.totalCombinedMarks || b.percentage - a.percentage);
 
     // Assign rank and scholarship eligibility
     const topCount = config.topStudentsCount || config.topCount || 5;
@@ -202,7 +197,7 @@ export const resultsService = {
 
     standings.forEach((st, idx) => {
       st.rank = idx + 1;
-      if (st.rank <= topCount && st.combinedScore > 0) {
+      if (st.rank <= topCount && st.totalCombinedMarks > 0) {
         st.isEligibleForScholarship = true;
         st.scholarshipPercentage = scholarshipPct;
       }
