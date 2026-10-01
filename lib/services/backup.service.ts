@@ -3,6 +3,32 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 
 /**
+ * Recursively converts ISO 8601 date strings back to Date objects.
+ * JSON.parse() loses Date types, so we need to revive them after parsing.
+ */
+function reviveDates<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(obj)) {
+      const d = new Date(obj);
+      if (!isNaN(d.getTime())) return d as unknown as T;
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(reviveDates) as unknown as T;
+  }
+  if (typeof obj === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      result[key] = reviveDates(value);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
+/**
  * Backup file structure.
  */
 interface BackupData {
@@ -121,6 +147,9 @@ export const backupService = {
    * Import a validated backup, replacing all existing data.
    */
   async importBackup(backup: BackupData): Promise<void> {
+    // Revive date strings back to Date objects (JSON parse loses Date types)
+    const d = reviveDates(backup.data);
+
     await db().transaction(
       'rw',
       [
@@ -141,46 +170,46 @@ export const backupService = {
       ],
       async () => {
         await db().profile.clear();
-        if (backup.data.profile.length) await db().profile.bulkAdd(backup.data.profile as never[]);
+        if (d.profile.length) await db().profile.bulkAdd(d.profile as never[]);
 
         await db().semesters.clear();
-        if (backup.data.semesters.length) await db().semesters.bulkAdd(backup.data.semesters as never[]);
+        if (d.semesters.length) await db().semesters.bulkAdd(d.semesters as never[]);
 
         await db().subjects.clear();
-        if (backup.data.subjects.length) await db().subjects.bulkAdd(backup.data.subjects as never[]);
+        if (d.subjects.length) await db().subjects.bulkAdd(d.subjects as never[]);
 
         await db().attendance.clear();
-        if (backup.data.attendance.length) await db().attendance.bulkAdd(backup.data.attendance as never[]);
+        if (d.attendance.length) await db().attendance.bulkAdd(d.attendance as never[]);
 
         await db().results.clear();
-        if (backup.data.results.length) await db().results.bulkAdd(backup.data.results as never[]);
+        if (d.results.length) await db().results.bulkAdd(d.results as never[]);
 
         await db().gradeScale.clear();
-        if (backup.data.gradeScale.length) await db().gradeScale.bulkAdd(backup.data.gradeScale as never[]);
+        if (d.gradeScale.length) await db().gradeScale.bulkAdd(d.gradeScale as never[]);
 
         await db().fees.clear();
-        if (backup.data.fees.length) await db().fees.bulkAdd(backup.data.fees as never[]);
+        if (d.fees.length) await db().fees.bulkAdd(d.fees as never[]);
 
         await db().payments.clear();
-        if (backup.data.payments.length) await db().payments.bulkAdd(backup.data.payments as never[]);
+        if (d.payments.length) await db().payments.bulkAdd(d.payments as never[]);
 
         await db().routine.clear();
-        if (backup.data.routine.length) await db().routine.bulkAdd(backup.data.routine as never[]);
+        if (d.routine.length) await db().routine.bulkAdd(d.routine as never[]);
 
         await db().assignments.clear();
-        if (backup.data.assignments.length) await db().assignments.bulkAdd(backup.data.assignments as never[]);
+        if (d.assignments.length) await db().assignments.bulkAdd(d.assignments as never[]);
 
         await db().exams.clear();
-        if (backup.data.exams.length) await db().exams.bulkAdd(backup.data.exams as never[]);
+        if (d.exams.length) await db().exams.bulkAdd(d.exams as never[]);
 
         await db().notes.clear();
-        if (backup.data.notes.length) await db().notes.bulkAdd(backup.data.notes as never[]);
+        if (d.notes.length) await db().notes.bulkAdd(d.notes as never[]);
 
         await db().settings.clear();
-        if (backup.data.settings.length) await db().settings.bulkAdd(backup.data.settings as never[]);
+        if (d.settings.length) await db().settings.bulkAdd(d.settings as never[]);
 
         await db().projects.clear();
-        if (backup.data.projects.length) await db().projects.bulkAdd(backup.data.projects as never[]);
+        if (d.projects.length) await db().projects.bulkAdd(d.projects as never[]);
       }
     );
   },

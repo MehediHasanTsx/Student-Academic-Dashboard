@@ -5,6 +5,7 @@ import { useProfile } from '@/lib/hooks/useProfile';
 import { useSubjects } from '@/lib/hooks/useSubjects';
 import { useAuth } from '@/components/providers/auth-provider';
 import { routineService } from '@/lib/services/routine.service';
+import { mainDataService } from '@/lib/services/main-data.service';
 import { seed5thSemesterRoutine } from '@/lib/db/seed';
 import {
   DAYS_OF_WEEK,
@@ -51,12 +52,14 @@ import {
   Trash2,
   Pencil,
   RotateCcw,
+  RefreshCw,
   BookOpen,
   Users,
   MapPin,
   Clock,
   CheckCircle2,
   Calendar,
+  CloudDownload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { RoutineSlot, DayOfWeek } from '@/types/database';
@@ -75,6 +78,7 @@ export default function RoutinePage() {
   const [deleteTarget, setDeleteTarget] = useState<RoutineSlot | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [syncingOfficial, setSyncingOfficial] = useState(false);
   const today = getCurrentDay();
 
   // Detect user's lab group from roll number
@@ -287,33 +291,70 @@ export default function RoutinePage() {
           </Button>
         </div>
 
-        {/* Admin Controls */}
-        {isAdmin && (
-          <div className="flex items-center gap-2">
+        {/* Controls */}
+        <div className="flex items-center gap-2">
+          {/* Student: Sync Official Routine */}
+          {!isAdmin && (
             <Button
               variant="outline"
               size="sm"
               className="h-8 text-xs gap-1.5"
-              onClick={() => setResetConfirmOpen(true)}
-              title="Reset routine to official DCC notice schedule"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Reset to Notice
-            </Button>
-            <Button
-              size="sm"
-              className="h-8 text-xs gap-1.5"
-              onClick={() => {
-                setEditingSlot(null);
-                setDefaultDay('sunday');
-                setDialogOpen(true);
+              disabled={syncingOfficial}
+              onClick={async () => {
+                if (!semesterId) return;
+                setSyncingOfficial(true);
+                try {
+                  // Sync subjects first so routine slot links resolve
+                  await mainDataService.syncSubjectsWithMain(semesterId);
+                  const { slotCount } = await mainDataService.syncRoutineWithMain(semesterId);
+                  await loadData();
+                  toast.success(`Official routine synced — ${slotCount} class slots loaded.`);
+                } catch (err) {
+                  console.error('Routine sync failed:', err);
+                  toast.error('Failed to sync official routine. Try again later.');
+                } finally {
+                  setSyncingOfficial(false);
+                }
               }}
+              title="Download the official class routine from the server"
             >
-              <Plus className="h-3.5 w-3.5" />
-              Add Class
+              {syncingOfficial ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CloudDownload className="h-3.5 w-3.5" />
+              )}
+              {syncingOfficial ? 'Syncing...' : 'Sync Official Routine'}
             </Button>
-          </div>
-        )}
+          )}
+
+          {/* Admin Controls */}
+          {isAdmin && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5"
+                onClick={() => setResetConfirmOpen(true)}
+                title="Reset routine to official DCC notice schedule"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset to Notice
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs gap-1.5"
+                onClick={() => {
+                  setEditingSlot(null);
+                  setDefaultDay('sunday');
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Class
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* ── Weekly Routine Day Cards ── */}

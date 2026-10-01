@@ -10,6 +10,14 @@ import { EmptyState } from '@/app/components/EmptyState';
 import { ProjectCard } from './components/ProjectCard';
 import { ArchiveView } from './components/ArchiveView';
 import { FilterPanel } from './components/FilterPanel';
+import { Button, buttonVariants } from '@/components/ui/button';
+import {
+  FlaskConical,
+  Plus,
+  FolderTree,
+  LayoutGrid,
+  Search,
+} from 'lucide-react';
 
 type ViewMode = 'archive' | 'list';
 
@@ -32,65 +40,53 @@ export default function LabProjectsPage() {
   }, []);
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in">
+    <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 animate-in fade-in-0 duration-300">
       {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
-                <path d="M8.5 2h7" />
-                <path d="M7 16h10" />
-              </svg>
-            </div>
-            Lab Projects
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            {totalCount} project{totalCount !== 1 ? 's' : ''} in your academic archive
-          </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+            <FlaskConical className="size-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
+              Lab Projects
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {totalCount} project{totalCount !== 1 ? 's' : ''} in your academic archive
+            </p>
+          </div>
         </div>
-        <Link href="/lab-projects/new" className="btn btn-primary" id="add-project-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Add Project
+        <Link href="/lab-projects/new" id="add-project-btn" className={buttonVariants({ className: "gap-1.5" })}>
+            <Plus className="size-4" />
+            Add Project
         </Link>
       </div>
 
       {/* View Toggle + Search */}
-      <div className="mb-6 space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {/* View Toggle */}
-          <div className="flex rounded-lg border border-border bg-surface p-0.5">
+          <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
             <button
               onClick={() => setViewMode('archive')}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                 viewMode === 'archive'
-                  ? 'bg-accent/10 text-accent'
-                  : 'text-muted hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
               }`}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              </svg>
+              <FolderTree className="size-3.5" />
               Archive
             </button>
             <button
               onClick={() => setViewMode('list')}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                 viewMode === 'list'
-                  ? 'bg-accent/10 text-accent'
-                  : 'text-muted hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
               }`}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7" />
-                <rect x="14" y="3" width="7" height="7" />
-                <rect x="3" y="14" width="7" height="7" />
-                <rect x="14" y="14" width="7" height="7" />
-              </svg>
+              <LayoutGrid className="size-3.5" />
               Grid
             </button>
           </div>
@@ -131,9 +127,12 @@ export default function LabProjectsPage() {
       ) : viewMode === 'archive' ? (
         <ArchiveView />
       ) : projects.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-sm text-muted">No projects match your filters</p>
-          <button
+        <div className="py-16 text-center space-y-3">
+          <Search className="size-10 mx-auto text-muted-foreground/30" />
+          <p className="text-sm text-muted-foreground">No projects match your filters</p>
+          <Button
+            variant="link"
+            size="sm"
             onClick={() => {
               setSearch('');
               setYearNumber(undefined);
@@ -141,13 +140,13 @@ export default function LabProjectsPage() {
               setSubjectId(undefined);
               setLanguage(undefined);
             }}
-            className="mt-2 text-xs text-accent hover:underline"
+            className="text-xs text-primary"
           >
             Clear all filters
-          </button>
+          </Button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 stagger-children">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <ProjectCard
               key={project.id}

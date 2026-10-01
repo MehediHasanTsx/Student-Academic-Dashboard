@@ -126,9 +126,42 @@ async function exportSnapshot(): Promise<SyncData> {
   };
 }
 
+/**
+ * Recursively walks a data structure and converts ISO 8601 date strings back
+ * to proper Date objects. This is critical because JSON.stringify() converts
+ * all Date objects to strings, and when data is downloaded from cloud (PostgreSQL → JSON → client),
+ * all dates become plain strings, breaking Dexie queries and UI components
+ * that call .toLocaleDateString(), .getTime(), etc.
+ */
+function reviveDates<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === 'string') {
+    // Match ISO 8601 date patterns: "2026-01-15T12:00:00.000Z" or "2026-01-15T12:00:00+06:00"
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(obj)) {
+      const d = new Date(obj);
+      if (!isNaN(d.getTime())) return d as unknown as T;
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(reviveDates) as unknown as T;
+  }
+  if (typeof obj === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      result[key] = reviveDates(value);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
 async function importSnapshot(data: SyncData): Promise<void> {
   _isSyncing = true;
   try {
+    // Revive all date strings back to Date objects before importing
+    const restored = reviveDates(data);
+
     await db().transaction(
       'rw',
       [
@@ -160,24 +193,24 @@ async function importSnapshot(data: SyncData): Promise<void> {
           db().scholarshipConfig.clear(),
         ]);
 
-        // Import all data
-        if (data.profile?.length) await db().profile.bulkAdd(data.profile as never[]);
-        if (data.semesters?.length) await db().semesters.bulkAdd(data.semesters as never[]);
-        if (data.subjects?.length) await db().subjects.bulkAdd(data.subjects as never[]);
-        if (data.attendance?.length) await db().attendance.bulkAdd(data.attendance as never[]);
-        if (data.results?.length) await db().results.bulkAdd(data.results as never[]);
-        if (data.gradeScale?.length) await db().gradeScale.bulkAdd(data.gradeScale as never[]);
-        if (data.fees?.length) await db().fees.bulkAdd(data.fees as never[]);
-        if (data.payments?.length) await db().payments.bulkAdd(data.payments as never[]);
-        if (data.routine?.length) await db().routine.bulkAdd(data.routine as never[]);
-        if (data.assignments?.length) await db().assignments.bulkAdd(data.assignments as never[]);
-        if (data.exams?.length) await db().exams.bulkAdd(data.exams as never[]);
-        if (data.notes?.length) await db().notes.bulkAdd(data.notes as never[]);
-        if (data.settings?.length) await db().settings.bulkAdd(data.settings as never[]);
-        if (data.projects?.length) await db().projects.bulkAdd(data.projects as never[]);
-        if (data.examRoutines?.length) await db().examRoutines.bulkAdd(data.examRoutines as never[]);
-        if (data.studentResults?.length) await db().studentResults.bulkAdd(data.studentResults as never[]);
-        if (data.scholarshipConfig?.length) await db().scholarshipConfig.bulkAdd(data.scholarshipConfig as never[]);
+        // Import all data with proper Date objects restored
+        if (restored.profile?.length) await db().profile.bulkAdd(restored.profile as never[]);
+        if (restored.semesters?.length) await db().semesters.bulkAdd(restored.semesters as never[]);
+        if (restored.subjects?.length) await db().subjects.bulkAdd(restored.subjects as never[]);
+        if (restored.attendance?.length) await db().attendance.bulkAdd(restored.attendance as never[]);
+        if (restored.results?.length) await db().results.bulkAdd(restored.results as never[]);
+        if (restored.gradeScale?.length) await db().gradeScale.bulkAdd(restored.gradeScale as never[]);
+        if (restored.fees?.length) await db().fees.bulkAdd(restored.fees as never[]);
+        if (restored.payments?.length) await db().payments.bulkAdd(restored.payments as never[]);
+        if (restored.routine?.length) await db().routine.bulkAdd(restored.routine as never[]);
+        if (restored.assignments?.length) await db().assignments.bulkAdd(restored.assignments as never[]);
+        if (restored.exams?.length) await db().exams.bulkAdd(restored.exams as never[]);
+        if (restored.notes?.length) await db().notes.bulkAdd(restored.notes as never[]);
+        if (restored.settings?.length) await db().settings.bulkAdd(restored.settings as never[]);
+        if (restored.projects?.length) await db().projects.bulkAdd(restored.projects as never[]);
+        if (restored.examRoutines?.length) await db().examRoutines.bulkAdd(restored.examRoutines as never[]);
+        if (restored.studentResults?.length) await db().studentResults.bulkAdd(restored.studentResults as never[]);
+        if (restored.scholarshipConfig?.length) await db().scholarshipConfig.bulkAdd(restored.scholarshipConfig as never[]);
       }
     );
   } finally {

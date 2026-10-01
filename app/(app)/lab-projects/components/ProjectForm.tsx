@@ -8,6 +8,32 @@ import type { Project } from '@/types/database';
 import { projectSchema, SUPPORTED_LANGUAGES, type ProjectFormData } from '@/lib/db/schemas';
 import { useSemesters } from '@/lib/hooks/useSemesters';
 import { useSubjects } from '@/lib/hooks/useSubjects';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Info,
+  GraduationCap,
+  Code2,
+  Tag,
+  Link as LinkIcon,
+  FileText,
+  Plus,
+  X,
+  Loader2,
+  Check,
+  Hash,
+} from 'lucide-react';
 
 interface ProjectFormProps {
   project?: Project;
@@ -147,252 +173,243 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-8 animate-fade-in">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-6 animate-in fade-in-0 duration-300">
       {/* ── Basic Info ──────────────────────────────── */}
-      <section className="rounded-xl border border-border bg-surface-elevated p-6">
-        <h2 className="mb-5 text-sm font-bold text-foreground tracking-wide uppercase flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="16" />
-            <line x1="8" y1="12" x2="16" y2="12" />
-          </svg>
-          Project Information
-        </h2>
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Info className="size-4 text-primary" />
+            Project Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Title */}
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label htmlFor="title">
+                Project Title <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => updateField('title', e.target.value)}
+                className={errors.title ? 'border-destructive' : ''}
+                placeholder="e.g. Linked List Implementation"
+              />
+              {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
+            </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          {/* Title */}
-          <div className="sm:col-span-2">
-            <label htmlFor="title" className="form-label">
-              Project Title <span className="text-danger">*</span>
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={formData.title}
-              onChange={(e) => updateField('title', e.target.value)}
-              className={`form-input ${errors.title ? 'error' : ''}`}
-              placeholder="e.g. Linked List Implementation"
-            />
-            {errors.title && <p className="form-error">{errors.title}</p>}
-          </div>
+            {/* Lab Number */}
+            <div className="space-y-1.5">
+              <Label htmlFor="labNumber">
+                Lab Number <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="labNumber"
+                value={formData.labNumber}
+                onChange={(e) => updateField('labNumber', e.target.value)}
+                className={errors.labNumber ? 'border-destructive' : ''}
+                placeholder="e.g. Lab 03"
+              />
+              {errors.labNumber && <p className="text-xs text-destructive">{errors.labNumber}</p>}
+            </div>
 
-          {/* Lab Number */}
-          <div>
-            <label htmlFor="labNumber" className="form-label">
-              Lab Number <span className="text-danger">*</span>
-            </label>
-            <input
-              id="labNumber"
-              type="text"
-              value={formData.labNumber}
-              onChange={(e) => updateField('labNumber', e.target.value)}
-              className={`form-input ${errors.labNumber ? 'error' : ''}`}
-              placeholder="e.g. Lab 03"
-            />
-            {errors.labNumber && <p className="form-error">{errors.labNumber}</p>}
-          </div>
+            {/* Language */}
+            <div className="space-y-1.5">
+              <Label htmlFor="language">
+                Programming Language <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={formData.language || undefined}
+                onValueChange={(val) => updateField('language', val ?? '')}
+              >
+                <SelectTrigger id="language" className={errors.language ? 'border-destructive' : ''}>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <SelectItem key={l.value} value={l.value}>
+                      {l.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.language && <p className="text-xs text-destructive">{errors.language}</p>}
+            </div>
 
-          {/* Language */}
-          <div>
-            <label htmlFor="language" className="form-label">
-              Programming Language <span className="text-danger">*</span>
-            </label>
-            <select
-              id="language"
-              value={formData.language}
-              onChange={(e) => updateField('language', e.target.value)}
-              className={`form-input ${errors.language ? 'error' : ''}`}
-            >
-              <option value="">Select language</option>
-              {SUPPORTED_LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-            {errors.language && <p className="form-error">{errors.language}</p>}
+            {/* Description */}
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label htmlFor="description">
+                Description <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                className={`min-h-20 resize-y ${errors.description ? 'border-destructive' : ''}`}
+                placeholder="Describe what this project does…"
+                rows={3}
+              />
+              {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
+            </div>
           </div>
-
-          {/* Description */}
-          <div className="sm:col-span-2">
-            <label htmlFor="description" className="form-label">
-              Description <span className="text-danger">*</span>
-            </label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              className={`form-input min-h-20 resize-y ${errors.description ? 'error' : ''}`}
-              placeholder="Describe what this project does…"
-              rows={3}
-            />
-            {errors.description && <p className="form-error">{errors.description}</p>}
-          </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {/* ── Academic Info ───────────────────────────── */}
-      <section className="rounded-xl border border-border bg-surface-elevated p-6">
-        <h2 className="mb-5 text-sm font-bold text-foreground tracking-wide uppercase flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-            <path d="M6 12v5c3 3 6 3 12 0v-5" />
-          </svg>
-          Academic Details
-        </h2>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          {/* Semester */}
-          <div>
-            <label htmlFor="semesterId" className="form-label">
-              Semester <span className="text-danger">*</span>
-            </label>
-            <select
-              id="semesterId"
-              value={formData.semesterId}
-              onChange={(e) => {
-                updateField('semesterId', e.target.value);
-                updateField('subjectId', '');
-              }}
-              className={`form-input ${errors.semesterId ? 'error' : ''}`}
-            >
-              <option value="">Select semester</option>
-              {semesters.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} (Year {Math.ceil(s.number / 2)})
-                </option>
-              ))}
-            </select>
-            {errors.semesterId && <p className="form-error">{errors.semesterId}</p>}
-          </div>
-
-          {/* Subject */}
-          <div>
-            <label htmlFor="subjectId" className="form-label">
-              Subject <span className="text-danger">*</span>
-            </label>
-            <div className="flex gap-2">
-              <select
-                id="subjectId"
-                value={formData.subjectId}
-                onChange={(e) => updateField('subjectId', e.target.value)}
-                className={`form-input ${errors.subjectId ? 'error' : ''}`}
-                disabled={!formData.semesterId}
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <GraduationCap className="size-4 text-primary" />
+            Academic Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Semester */}
+            <div className="space-y-1.5">
+              <Label htmlFor="semesterId">
+                Semester <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={formData.semesterId || undefined}
+                onValueChange={(val) => {
+                  updateField('semesterId', val ?? '');
+                  updateField('subjectId', '');
+                }}
               >
-                <option value="">
-                  {formData.semesterId ? 'Select subject' : 'Select semester first'}
-                </option>
-                {subjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              {formData.semesterId && (
-                <button
-                  type="button"
-                  onClick={() => setShowAddSubject(!showAddSubject)}
-                  className="btn-icon shrink-0 border border-border"
-                  title="Add new subject"
+                <SelectTrigger id="semesterId" className={errors.semesterId ? 'border-destructive' : ''}>
+                  <SelectValue placeholder="Select semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  {semesters.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name} (Year {Math.ceil(s.number / 2)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.semesterId && <p className="text-xs text-destructive">{errors.semesterId}</p>}
+            </div>
+
+            {/* Subject */}
+            <div className="space-y-1.5">
+              <Label htmlFor="subjectId">
+                Subject <span className="text-destructive">*</span>
+              </Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.subjectId || undefined}
+                  onValueChange={(val) => updateField('subjectId', val ?? '')}
+                  disabled={!formData.semesterId}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </button>
+                  <SelectTrigger id="subjectId" className={errors.subjectId ? 'border-destructive' : ''}>
+                    <SelectValue placeholder={formData.semesterId ? 'Select subject' : 'Select semester first'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.semesterId && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowAddSubject(!showAddSubject)}
+                    title="Add new subject"
+                    className="shrink-0"
+                  >
+                    <Plus className="size-4" />
+                  </Button>
+                )}
+              </div>
+              {errors.subjectId && <p className="text-xs text-destructive">{errors.subjectId}</p>}
+
+              {/* Add Subject Inline */}
+              {showAddSubject && formData.semesterId && (
+                <div className="flex gap-2 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+                  <Input
+                    value={newSubjectName}
+                    onChange={(e) => setNewSubjectName(e.target.value)}
+                    className="text-xs"
+                    placeholder="Subject name (e.g. Data Structures)"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddSubject();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddSubject}
+                  >
+                    Add
+                  </Button>
+                </div>
               )}
             </div>
-            {errors.subjectId && <p className="form-error">{errors.subjectId}</p>}
-
-            {/* Add Subject Inline */}
-            {showAddSubject && formData.semesterId && (
-              <div className="mt-2 flex gap-2 animate-fade-in">
-                <input
-                  type="text"
-                  value={newSubjectName}
-                  onChange={(e) => setNewSubjectName(e.target.value)}
-                  className="form-input text-xs!"
-                  placeholder="Subject name (e.g. Data Structures)"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddSubject();
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddSubject}
-                  className="btn btn-primary px-3! py-1.5! text-xs!"
-                >
-                  Add
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {/* ── Source Code ─────────────────────────────── */}
-      <section className="rounded-xl border border-border bg-surface-elevated p-6">
-        <h2 className="mb-5 text-sm font-bold text-foreground tracking-wide uppercase flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="16 18 22 12 16 6" />
-            <polyline points="8 6 2 12 8 18" />
-          </svg>
-          Source Code
-        </h2>
-
-        <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Code2 className="size-4 text-primary" />
+            Source Code
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           {/* File Name */}
-          <div>
-            <label htmlFor="fileName" className="form-label">File Name</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="fileName">File Name</Label>
+            <Input
               id="fileName"
-              type="text"
               value={formData.fileName}
               onChange={(e) => updateField('fileName', e.target.value)}
-              className="form-input"
               placeholder="e.g. linked_list.cpp"
             />
           </div>
 
           {/* Source Code */}
-          <div>
-            <label htmlFor="sourceCode" className="form-label">Source Code</label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="sourceCode">Source Code</Label>
+            <Textarea
               id="sourceCode"
               value={formData.sourceCode}
               onChange={(e) => updateField('sourceCode', e.target.value)}
-              className="form-input min-h-50 resize-y font-mono text-xs leading-relaxed"
+              className="min-h-50 resize-y font-mono text-xs leading-relaxed"
               placeholder="Paste your source code here…"
               rows={12}
               spellCheck={false}
             />
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {/* ── Technologies & Tags ─────────────────────── */}
-      <section className="rounded-xl border border-border bg-surface-elevated p-6">
-        <h2 className="mb-5 text-sm font-bold text-foreground tracking-wide uppercase flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-            <line x1="7" y1="7" x2="7.01" y2="7" />
-          </svg>
-          Technologies & Tags
-        </h2>
-
-        <div className="space-y-5">
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Tag className="size-4 text-primary" />
+            Technologies & Tags
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
           {/* Technologies */}
-          <div>
-            <label className="form-label">Technologies / Tools</label>
+          <div className="space-y-2">
+            <Label>Technologies / Tools</Label>
             <div className="flex gap-2">
-              <input
-                type="text"
+              <Input
                 value={techInput}
                 onChange={(e) => setTechInput(e.target.value)}
-                className="form-input"
                 placeholder="e.g. GCC, Visual Studio, Make"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -401,41 +418,41 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
                   }
                 }}
               />
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={addTech}
-                className="btn btn-secondary px-3! text-xs!"
+                className="shrink-0"
               >
                 Add
-              </button>
+              </Button>
             </div>
             {formData.technologies.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {formData.technologies.map((tech) => (
-                  <span key={tech} className="chip group">
+                  <Badge key={tech} variant="secondary" className="gap-1 pr-1">
                     {tech}
                     <button
                       type="button"
                       onClick={() => removeTech(tech)}
-                      className="ml-0.5 text-muted hover:text-danger transition-colors"
+                      className="ml-0.5 hover:text-destructive transition-colors rounded-full p-0.5"
                     >
-                      ×
+                      <X className="size-3" />
                     </button>
-                  </span>
+                  </Badge>
                 ))}
               </div>
             )}
           </div>
 
           {/* Tags */}
-          <div>
-            <label className="form-label">Tags</label>
+          <div className="space-y-2">
+            <Label>Tags</Label>
             <div className="flex gap-2">
-              <input
-                type="text"
+              <Input
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                className="form-input"
                 placeholder="e.g. algorithms, linked-list, pointer"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -444,186 +461,177 @@ export function ProjectForm({ project, mode }: ProjectFormProps) {
                   }
                 }}
               />
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={addTag}
-                className="btn btn-secondary px-3! text-xs!"
+                className="shrink-0"
               >
                 Add
-              </button>
+              </Button>
             </div>
             {formData.tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {formData.tags.map((tag) => (
-                  <span key={tag} className="chip-accent chip group">
-                    #{tag}
+                  <Badge key={tag} variant="outline" className="gap-0.5 pr-1">
+                    <Hash className="size-2.5" />
+                    {tag}
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="ml-0.5 text-accent hover:text-danger transition-colors"
+                      className="ml-0.5 hover:text-destructive transition-colors rounded-full p-0.5"
                     >
-                      ×
+                      <X className="size-3" />
                     </button>
-                  </span>
+                  </Badge>
                 ))}
               </div>
             )}
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {/* ── URLs ────────────────────────────────────── */}
-      <section className="rounded-xl border border-border bg-surface-elevated p-6">
-        <h2 className="mb-5 text-sm font-bold text-foreground tracking-wide uppercase flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-          </svg>
-          External Links
-        </h2>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor="githubUrl" className="form-label">GitHub Repository URL</label>
-            <input
-              id="githubUrl"
-              type="url"
-              value={formData.githubUrl}
-              onChange={(e) => updateField('githubUrl', e.target.value)}
-              className={`form-input ${errors.githubUrl ? 'error' : ''}`}
-              placeholder="https://github.com/username/project"
-            />
-            {errors.githubUrl && <p className="form-error">{errors.githubUrl}</p>}
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <LinkIcon className="size-4 text-primary" />
+            External Links
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="githubUrl">GitHub Repository URL</Label>
+              <Input
+                id="githubUrl"
+                type="url"
+                value={formData.githubUrl}
+                onChange={(e) => updateField('githubUrl', e.target.value)}
+                className={errors.githubUrl ? 'border-destructive' : ''}
+                placeholder="https://github.com/username/project"
+              />
+              {errors.githubUrl && <p className="text-xs text-destructive">{errors.githubUrl}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="liveDemoUrl">Live Demo URL</Label>
+              <Input
+                id="liveDemoUrl"
+                type="url"
+                value={formData.liveDemoUrl}
+                onChange={(e) => updateField('liveDemoUrl', e.target.value)}
+                className={errors.liveDemoUrl ? 'border-destructive' : ''}
+                placeholder="https://example.com/demo"
+              />
+              {errors.liveDemoUrl && <p className="text-xs text-destructive">{errors.liveDemoUrl}</p>}
+            </div>
           </div>
-          <div>
-            <label htmlFor="liveDemoUrl" className="form-label">Live Demo URL</label>
-            <input
-              id="liveDemoUrl"
-              type="url"
-              value={formData.liveDemoUrl}
-              onChange={(e) => updateField('liveDemoUrl', e.target.value)}
-              className={`form-input ${errors.liveDemoUrl ? 'error' : ''}`}
-              placeholder="https://example.com/demo"
-            />
-            {errors.liveDemoUrl && <p className="form-error">{errors.liveDemoUrl}</p>}
-          </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {/* ── Documentation ──────────────────────────── */}
-      <section className="rounded-xl border border-border bg-surface-elevated p-6">
-        <h2 className="mb-5 text-sm font-bold text-foreground tracking-wide uppercase flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-          Documentation
-        </h2>
-
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="overview" className="form-label">Overview</label>
-            <textarea
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <FileText className="size-4 text-primary" />
+            Documentation
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="overview">Overview</Label>
+            <Textarea
               id="overview"
               value={formData.overview}
               onChange={(e) => updateField('overview', e.target.value)}
-              className="form-input min-h-15 resize-y"
+              className="min-h-15 resize-y"
               placeholder="Brief overview of this project…"
               rows={2}
             />
           </div>
 
-          <div>
-            <label htmlFor="objective" className="form-label">Objective</label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="objective">Objective</Label>
+            <Textarea
               id="objective"
               value={formData.objective}
               onChange={(e) => updateField('objective', e.target.value)}
-              className="form-input min-h-15 resize-y"
+              className="min-h-15 resize-y"
               placeholder="What is the objective of this lab/project?"
               rows={2}
             />
           </div>
 
-          <div>
-            <label htmlFor="conceptsLearned" className="form-label">Concepts Learned</label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="conceptsLearned">Concepts Learned</Label>
+            <Textarea
               id="conceptsLearned"
               value={formData.conceptsLearned}
               onChange={(e) => updateField('conceptsLearned', e.target.value)}
-              className="form-input min-h-15 resize-y"
+              className="min-h-15 resize-y"
               placeholder="Key concepts learned from this project…"
               rows={2}
             />
           </div>
 
-          <div>
-            <label htmlFor="outputResult" className="form-label">Output / Result</label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="outputResult">Output / Result</Label>
+            <Textarea
               id="outputResult"
               value={formData.outputResult}
               onChange={(e) => updateField('outputResult', e.target.value)}
-              className="form-input min-h-15 resize-y"
+              className="min-h-15 resize-y"
               placeholder="Expected output or result…"
               rows={2}
             />
           </div>
 
-          <div>
-            <label htmlFor="notes" className="form-label">Notes</label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => updateField('notes', e.target.value)}
-              className="form-input min-h-15 resize-y"
+              className="min-h-15 resize-y"
               placeholder="Additional notes, observations, or reminders…"
               rows={2}
             />
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {/* ── Actions ─────────────────────────────────── */}
       <div className="flex items-center justify-between pb-8">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => router.back()}
-          className="btn btn-secondary"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
           disabled={saving}
-          className="btn btn-primary"
+          className="gap-1.5"
         >
           {saving ? (
             <>
-              <div
-                className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white"
-                style={{ animation: 'spin 0.8s linear infinite' }}
-              />
+              <Loader2 className="size-4 animate-spin" />
               Saving…
             </>
           ) : mode === 'create' ? (
             <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <Plus className="size-4" />
               Create Project
             </>
           ) : (
             <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <Check className="size-4" />
               Save Changes
             </>
           )}
-        </button>
+        </Button>
       </div>
     </form>
   );

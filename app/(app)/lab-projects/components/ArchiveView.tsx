@@ -3,16 +3,31 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db/database';
 import { useSemesters, useAllSubjects } from '@/lib/hooks/useSemesters';
-
 import { ProjectCard } from './ProjectCard';
 import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import {
+  ChevronDown,
+  FolderOpen,
+  Folder,
+  FlaskConical,
+} from 'lucide-react';
 
 export function ArchiveView() {
   const semesters = useSemesters();
   const subjects = useAllSubjects();
   const projects = useLiveQuery(() => db().projects.toArray()) ?? [];
+
+
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set([1, 2, 3, 4]));
-  const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set());
+  const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(() => {
+    // Auto-expand subjects that have projects for a nicer default experience
+    const set = new Set<string>();
+    for (const project of projects) {
+      set.add(project.subjectId);
+    }
+    return set;
+  });
 
   const semesterMap = new Map(semesters.map((s) => [s.id, s]));
   const subjectMap = new Map(subjects.map((s) => [s.id, s]));
@@ -65,111 +80,121 @@ export function ArchiveView() {
     return null;
   }
 
+  /** Year-specific accent colors for left border + icon bg */
+  const yearAccents = [
+    'border-l-blue-500 bg-blue-500',
+    'border-l-emerald-500 bg-emerald-500',
+    'border-l-amber-500 bg-amber-500',
+    'border-l-violet-500 bg-violet-500',
+  ];
+
   return (
-    <div className="space-y-3 stagger-children">
-      {yearGroups.map((yg) => (
-        <div key={yg.yearNumber} className="rounded-xl border border-border bg-surface-elevated overflow-hidden">
-          {/* Year Header */}
-          <button
-            onClick={() => toggleYear(yg.yearNumber)}
-            className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-accent-subtle/50"
+    <div className="space-y-4">
+      {yearGroups.map((yg, idx) => {
+        const isExpanded = expandedYears.has(yg.yearNumber);
+        const accentClasses = yearAccents[idx] ?? yearAccents[0];
+        const [borderClass, bgClass] = accentClasses.split(' ');
+
+        return (
+          <div
+            key={yg.yearNumber}
+            className={`rounded-xl border border-border/60 overflow-hidden transition-all duration-200 ${
+              isExpanded ? 'shadow-sm' : ''
+            } ${yg.totalProjects > 0 ? `border-l-[3px] ${borderClass}` : ''}`}
           >
-            <div className="flex items-center gap-3">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-lg font-bold text-sm ${
-                yg.totalProjects > 0
-                  ? 'bg-accent/10 text-accent'
-                  : 'bg-surface text-muted'
-              }`}>
-                {yg.yearNumber}
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">{yg.yearLabel}</h3>
-                <p className="text-[0.7rem] text-muted">
-                  {yg.totalProjects} project{yg.totalProjects !== 1 ? 's' : ''} · {yg.subjectGroups.length} subject{yg.subjectGroups.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
-            <svg
-              className={`text-muted transition-transform duration-200 ${expandedYears.has(yg.yearNumber) ? 'rotate-180' : ''}`}
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            {/* Year Header */}
+            <button
+              onClick={() => toggleYear(yg.yearNumber)}
+              className="flex w-full items-center justify-between px-4 md:px-5 py-3.5 text-left transition-colors hover:bg-accent/50"
             >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-
-          {/* Subjects */}
-          {expandedYears.has(yg.yearNumber) && yg.subjectGroups.length > 0 && (
-            <div className="border-t border-border">
-              {yg.subjectGroups.map((sg) => (
-                <div key={sg.subject.id}>
-                  {/* Subject Header */}
-                  <button
-                    onClick={() => toggleSubject(sg.subject.id)}
-                    className="flex w-full items-center justify-between px-5 py-3 pl-14 text-left transition-colors hover:bg-accent-subtle/30"
-                  >
-                    <div className="flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                      </svg>
-                      <span className="text-sm text-foreground">{sg.subject.name}</span>
-                      <span className="chip text-[0.6rem] ml-1">{sg.projects.length}</span>
-                    </div>
-                    <svg
-                      className={`text-muted transition-transform duration-200 ${expandedSubjects.has(sg.subject.id) ? 'rotate-180' : ''}`}
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-
-                  {/* Project Cards */}
-                  {expandedSubjects.has(sg.subject.id) && (
-                    <div className="grid gap-3 px-5 pb-4 pl-14 sm:grid-cols-2 lg:grid-cols-3">
-                      {sg.projects
-                        .sort((a, b) => a.labNumber.localeCompare(b.labNumber))
-                        .map((project) => (
-                          <ProjectCard
-                            key={project.id}
-                            project={project}
-                            semester={semesterMap.get(project.semesterId)}
-                            subject={subjectMap.get(project.subjectId)}
-                          />
-                        ))}
-                    </div>
-                  )}
+              <div className="flex items-center gap-3">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-lg text-white text-sm font-bold ${
+                  yg.totalProjects > 0
+                    ? bgClass
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {yg.yearNumber}
                 </div>
-              ))}
-            </div>
-          )}
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">{yg.yearLabel}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {yg.totalProjects} project{yg.totalProjects !== 1 ? 's' : ''} · {yg.subjectGroups.length} subject{yg.subjectGroups.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown
+                className={`size-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-          {expandedYears.has(yg.yearNumber) && yg.subjectGroups.length === 0 && (
-            <div className="border-t border-border px-5 py-6 text-center">
-              <p className="text-xs text-muted">No projects in this year yet</p>
-            </div>
-          )}
-        </div>
-      ))}
+            {/* Subjects */}
+            {isExpanded && yg.subjectGroups.length > 0 && (
+              <div className="border-t border-border/50">
+                {yg.subjectGroups.map((sg) => {
+                  const isSubjectExpanded = expandedSubjects.has(sg.subject.id);
+                  return (
+                    <div key={sg.subject.id} className="border-b border-border/30 last:border-b-0">
+                      {/* Subject Header */}
+                      <button
+                        onClick={() => toggleSubject(sg.subject.id)}
+                        className="flex w-full items-center justify-between px-4 md:px-5 py-3 pl-8 md:pl-12 text-left transition-colors hover:bg-accent/30"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          {isSubjectExpanded ? (
+                            <FolderOpen className="size-4 text-primary" />
+                          ) : (
+                            <Folder className="size-4 text-muted-foreground" />
+                          )}
+                          <span className="text-sm text-foreground font-medium">{sg.subject.name}</span>
+                          <Badge variant="secondary" className="text-[0.6rem] h-5 px-1.5">
+                            {sg.projects.length}
+                          </Badge>
+                        </div>
+                        <ChevronDown
+                          className={`size-3.5 text-muted-foreground transition-transform duration-200 ${isSubjectExpanded ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+
+                      {/* Project Cards */}
+                      {isSubjectExpanded && (
+                        <div className="grid gap-3 px-4 md:px-5 pb-4 pl-8 md:pl-12 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                          {sg.projects
+                            .sort((a, b) => a.labNumber.localeCompare(b.labNumber))
+                            .map((project) => (
+                              <ProjectCard
+                                key={project.id}
+                                project={project}
+                                semester={semesterMap.get(project.semesterId)}
+                                subject={subjectMap.get(project.subjectId)}
+                              />
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {isExpanded && yg.subjectGroups.length === 0 && (
+              <div className="border-t border-border/50 px-5 py-8 text-center">
+                <FlaskConical className="size-8 mx-auto mb-2 text-muted-foreground/40" />
+                <p className="text-xs text-muted-foreground">No projects in this year yet</p>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 function getOrdinalSuffix(n: number): string {
-  const suffixes = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0];
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return 'th';
+  const mod10 = n % 10;
+  if (mod10 === 1) return 'st';
+  if (mod10 === 2) return 'nd';
+  if (mod10 === 3) return 'rd';
+  return 'th';
 }

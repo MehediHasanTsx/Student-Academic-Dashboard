@@ -3,6 +3,30 @@
 import Link from 'next/link';
 import type { Project, Semester, Subject } from '@/types/database';
 import { SUPPORTED_LANGUAGES } from '@/lib/db/schemas';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Code2,
+  GitFork,
+  ExternalLink,
+  Calendar,
+  BookOpen,
+  GraduationCap,
+  Hash,
+} from 'lucide-react';
+
+/** Color palette keyed by language for the accent strip */
+const LANG_COLORS: Record<string, string> = {
+  c: 'from-blue-500 to-blue-600',
+  cpp: 'from-indigo-500 to-indigo-600',
+  java: 'from-orange-500 to-orange-600',
+  javascript: 'from-yellow-400 to-yellow-500',
+  typescript: 'from-sky-500 to-sky-600',
+  python: 'from-emerald-500 to-emerald-600',
+  html: 'from-rose-500 to-rose-600',
+  css: 'from-violet-500 to-violet-600',
+  sql: 'from-cyan-500 to-cyan-600',
+};
 
 interface ProjectCardProps {
   project: Project;
@@ -13,86 +37,110 @@ interface ProjectCardProps {
 export function ProjectCard({ project, semester, subject }: ProjectCardProps) {
   const langLabel =
     SUPPORTED_LANGUAGES.find((l) => l.value === project.language)?.label || project.language;
+  const gradient = LANG_COLORS[project.language] ?? 'from-primary to-primary/80';
 
   return (
     <Link
       href={`/lab-projects/${project.id}`}
-      className="glass-card block p-5 no-underline"
+      className="group block no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
       id={`project-card-${project.id}`}
     >
-      {/* Header */}
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-foreground truncate">{project.title}</h3>
-          <p className="mt-0.5 text-xs text-muted">{project.labNumber}</p>
-        </div>
-        <span className="chip-accent chip shrink-0 text-[0.65rem]">{langLabel}</span>
-      </div>
+      <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 border-border/60 h-full">
+        {/* Language accent strip */}
+        <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${gradient} opacity-80 group-hover:opacity-100 transition-opacity`} />
 
-      {/* Description */}
-      <p className="mb-3 text-xs text-muted line-clamp-2 leading-relaxed">
-        {project.description}
-      </p>
+        <CardContent className="p-4 pt-5 flex flex-col h-full">
+          {/* Header */}
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                {project.title}
+              </h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">{project.labNumber}</p>
+            </div>
+            <Badge variant="secondary" className="shrink-0 text-[0.65rem] font-medium">
+              {langLabel}
+            </Badge>
+          </div>
 
-      {/* Academic Info */}
-      <div className="mb-3 flex flex-wrap items-center gap-1.5">
-        {semester && (
-          <span className="chip text-[0.6rem]">Year {Math.ceil(semester.number / 2)}</span>
-        )}
-        {semester && (
-          <span className="chip text-[0.6rem]">{semester.name}</span>
-        )}
-        {subject && (
-          <span className="chip text-[0.6rem]">{subject.name}</span>
-        )}
-      </div>
+          {/* Description */}
+          {project.description && (
+            <p className="mb-3 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+              {project.description}
+            </p>
+          )}
 
-      {/* Tags */}
-      {project.tags.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-1">
-          {project.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="text-[0.6rem] text-accent/70">
-              #{tag}
+          {/* Academic Info */}
+          <div className="mb-3 flex flex-wrap items-center gap-1.5">
+            {semester && (
+              <Badge variant="outline" className="text-[0.65rem] gap-1 font-normal">
+                <GraduationCap className="size-3" />
+                Year {Math.ceil(semester.number / 2)}
+              </Badge>
+            )}
+            {semester && (
+              <Badge variant="outline" className="text-[0.65rem] gap-1 font-normal">
+                <Calendar className="size-3" />
+                {semester.name}
+              </Badge>
+            )}
+            {subject && (
+              <Badge variant="outline" className="text-[0.65rem] gap-1 font-normal">
+                <BookOpen className="size-3" />
+                {subject.name}
+              </Badge>
+            )}
+          </div>
+
+          {/* Tags */}
+          {project.tags.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-1">
+              {project.tags.slice(0, 3).map((tag) => (
+                <span key={tag} className="inline-flex items-center gap-0.5 text-[0.65rem] text-primary/70">
+                  <Hash className="size-2.5" />
+                  {tag}
+                </span>
+              ))}
+              {project.tags.length > 3 && (
+                <span className="text-[0.65rem] text-muted-foreground">
+                  +{project.tags.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-border/50 pt-3 mt-1">
+            <span className="text-[0.65rem] text-muted-foreground">
+              {project.createdAt.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
             </span>
-          ))}
-          {project.tags.length > 3 && (
-            <span className="text-[0.6rem] text-muted">
-              +{project.tags.length - 3} more
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between border-t border-border-subtle pt-3">
-        <span className="text-[0.6rem] text-muted">
-          {project.createdAt.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          })}
-        </span>
-        <div className="flex items-center gap-2">
-          {project.sourceCode && (
-            <svg className="text-success" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="16 18 22 12 16 6" />
-              <polyline points="8 6 2 12 8 18" />
-            </svg>
-          )}
-          {project.githubUrl && (
-            <svg className="text-muted" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-            </svg>
-          )}
-          {project.liveDemoUrl && (
-            <svg className="text-muted" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-          )}
-        </div>
-      </div>
+            <div className="flex items-center gap-1.5">
+              {project.sourceCode && (
+                <div className="flex items-center justify-center size-5 rounded-full bg-success/10">
+                  <Code2 className="size-3 text-success" />
+                </div>
+              )}
+              {project.githubUrl && (
+                <div className="flex items-center justify-center size-5 rounded-full bg-muted">
+                  <GitFork className="size-3 text-muted-foreground" />
+                </div>
+              )}
+              {project.liveDemoUrl && (
+                <div className="flex items-center justify-center size-5 rounded-full bg-muted">
+                  <ExternalLink className="size-3 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </Link>
   );
 }

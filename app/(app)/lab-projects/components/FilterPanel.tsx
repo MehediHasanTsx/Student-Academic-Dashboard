@@ -3,6 +3,16 @@
 import { useSemesters, useAllSubjects } from '@/lib/hooks/useSemesters';
 import { SUPPORTED_LANGUAGES } from '@/lib/db/schemas';
 import type { SortOption } from '@/lib/hooks/useProjects';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { X, SlidersHorizontal } from 'lucide-react';
 
 interface FilterPanelProps {
   yearNumber?: number;
@@ -46,113 +56,137 @@ export function FilterPanel({
       : subjects;
 
   const hasActiveFilters = yearNumber || semesterId || subjectId || language;
+  const activeCount = [yearNumber, semesterId, subjectId, language].filter(Boolean).length;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+        <SlidersHorizontal className="size-3.5" />
+        <span className="font-medium">Filters</span>
+        {activeCount > 0 && (
+          <Badge variant="secondary" className="text-[0.6rem] h-4 px-1.5 rounded-full">
+            {activeCount} active
+          </Badge>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
         {/* Year */}
-        <select
-          value={yearNumber ?? ''}
-          onChange={(e) => {
-            const val = e.target.value ? Number(e.target.value) : undefined;
-            onYearChange(val);
+        <Select
+          value={yearNumber?.toString() ?? 'all'}
+          onValueChange={(val) => {
+            const num = val === 'all' ? undefined : Number(val);
+            onYearChange(num);
             onSemesterChange(undefined);
             onSubjectChange(undefined);
           }}
-          className="form-input w-auto! py-2! text-xs!"
-          id="filter-year"
         >
-          <option value="">All Years</option>
-          <option value="1">1st Year</option>
-          <option value="2">2nd Year</option>
-          <option value="3">3rd Year</option>
-          <option value="4">4th Year</option>
-        </select>
+          <SelectTrigger className="w-32.5 h-8 text-xs" id="filter-year">
+            <SelectValue placeholder="All Years" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Years</SelectItem>
+            <SelectItem value="1">1st Year</SelectItem>
+            <SelectItem value="2">2nd Year</SelectItem>
+            <SelectItem value="3">3rd Year</SelectItem>
+            <SelectItem value="4">4th Year</SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Semester */}
-        <select
-          value={semesterId ?? ''}
-          onChange={(e) => {
-            const val = e.target.value || undefined;
-            onSemesterChange(val);
+        <Select
+          value={semesterId ?? 'all'}
+          onValueChange={(val) => {
+            const id = (val === 'all' || !val) ? undefined : val;
+            onSemesterChange(id);
             onSubjectChange(undefined);
-            // Auto-set year from semester
-            if (val) {
-              const sem = semesters.find((s) => s.id === val);
+            if (id) {
+              const sem = semesters.find((s) => s.id === id);
               if (sem) onYearChange(Math.ceil(sem.number / 2));
             }
           }}
-          className="form-input w-auto! py-2! text-xs!"
-          id="filter-semester"
         >
-          <option value="">All Semesters</option>
-          {filteredSemesters.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-40 h-8 text-xs" id="filter-semester">
+            <SelectValue placeholder="All Semesters" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Semesters</SelectItem>
+            {filteredSemesters.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Subject */}
-        <select
-          value={subjectId ?? ''}
-          onChange={(e) => onSubjectChange(e.target.value || undefined)}
-          className="form-input w-auto! py-2! text-xs!"
-          id="filter-subject"
+        <Select
+          value={subjectId ?? 'all'}
+          onValueChange={(val) => onSubjectChange(!val || val === 'all' ? undefined : val)}
         >
-          <option value="">All Subjects</option>
-          {filteredSubjects.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-45 h-8 text-xs" id="filter-subject">
+            <SelectValue placeholder="All Subjects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Subjects</SelectItem>
+            {filteredSubjects.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Language */}
-        <select
-          value={language ?? ''}
-          onChange={(e) => onLanguageChange(e.target.value || undefined)}
-          className="form-input w-auto! py-2! text-xs!"
-          id="filter-language"
+        <Select
+          value={language ?? 'all'}
+          onValueChange={(val) => onLanguageChange(!val || val === 'all' ? undefined : val)}
         >
-          <option value="">All Languages</option>
-          {SUPPORTED_LANGUAGES.map((l) => (
-            <option key={l.value} value={l.value}>
-              {l.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-37.5 h-8 text-xs" id="filter-language">
+            <SelectValue placeholder="All Languages" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Languages</SelectItem>
+            {SUPPORTED_LANGUAGES.map((l) => (
+              <SelectItem key={l.value} value={l.value}>
+                {l.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Sort */}
-        <select
+        <Select
           value={sort}
-          onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="form-input w-auto! py-2! text-xs!"
-          id="filter-sort"
+          onValueChange={(val) => onSortChange(val as SortOption)}
         >
-          <option value="recent">Recently Added</option>
-          <option value="updated">Recently Updated</option>
-          <option value="alphabetical">Alphabetical</option>
-          <option value="semester">By Semester</option>
-        </select>
+          <SelectTrigger className="w-40 h-8 text-xs" id="filter-sort">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">Recently Added</SelectItem>
+            <SelectItem value="updated">Recently Updated</SelectItem>
+            <SelectItem value="alphabetical">Alphabetical</SelectItem>
+            <SelectItem value="semester">By Semester</SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Clear */}
         {hasActiveFilters && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               onYearChange(undefined);
               onSemesterChange(undefined);
               onSubjectChange(undefined);
               onLanguageChange(undefined);
             }}
-            className="btn-ghost text-xs! text-danger"
+            className="h-8 text-xs text-destructive hover:text-destructive gap-1"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-            Clear filters
-          </button>
+            <X className="size-3" />
+            Clear
+          </Button>
         )}
       </div>
     </div>

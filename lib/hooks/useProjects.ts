@@ -44,7 +44,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
       }
 
       // Filter by language if not already applied via index
-      if (language && !(!subjectId && !semesterId)) {
+      if (language && (subjectId || semesterId)) {
         results = results.filter((p) => p.language === language);
       }
 
