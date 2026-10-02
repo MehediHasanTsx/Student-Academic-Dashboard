@@ -5,6 +5,7 @@ import { useProfile } from '@/lib/hooks/useProfile';
 import { useSubjects } from '@/lib/hooks/useSubjects';
 import { examRoutineService } from '@/lib/services/exam-routine.service';
 import { examService } from '@/lib/services/exam.service';
+import { mainDataService } from '@/lib/services/main-data.service';
 import { formatDate } from '@/lib/utils/formatters';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,6 +57,7 @@ import {
   CheckCircle2,
   FileText,
   RotateCcw,
+  CloudDownload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Exam, ExamRoutineItem, ExamType, SeatPlanRange } from '@/types/database';
@@ -248,9 +250,34 @@ export default function ExamsPage() {
           </Select>
 
           {!isAdmin && (
-            <Badge variant="outline" className="text-xs border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 py-1 px-2.5">
-              Official Department Routine · Published by Admin
-            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                try {
+                  setIsSyncing(true);
+                  const count = await examRoutineService.resetToOfficialRoutine(semesterId);
+                  await mainDataService.syncExamsWithMain(semesterId);
+                  await loadExamRoutines();
+                  await loadCustomExams();
+                  toast.success(`Synced official exam schedule (${count} exam slots updated).`);
+                } catch {
+                  toast.error('Failed to sync official exam routine.');
+                } finally {
+                  setIsSyncing(false);
+                }
+              }}
+              disabled={isSyncing}
+              className="h-9 text-xs gap-1.5 shadow-sm"
+              title="Sync latest exam routine and seat plans from Admin Cloud"
+            >
+              {isSyncing ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CloudDownload className="h-3.5 w-3.5" />
+              )}
+              {isSyncing ? 'Syncing...' : 'Sync Official Schedule'}
+            </Button>
           )}
 
           {isAdmin && (

@@ -333,20 +333,15 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-2">
-              <button
+              <Button
+                variant="outline"
                 type="button"
                 onClick={() => setQuickAttendanceOpen(true)}
-                className="w-full text-left"
+                className="h-auto w-full flex-col gap-1.5 py-3 text-xs"
               >
-                <Button
-                  variant="outline"
-                  type="button"
-                  className="h-auto w-full flex-col gap-1.5 py-3 text-xs"
-                >
-                  <CheckSquare className="h-4 w-4 text-emerald-500" />
-                  Mark Attendance
-                </Button>
-              </button>
+                <CheckSquare className="h-4 w-4 text-emerald-500" />
+                Mark Attendance
+              </Button>
               <QuickAction href="/subjects" icon={BookOpen} label="Add Subject" />
               <QuickAction href="/assignments" icon={ClipboardList} label="Add Assignment" />
               <QuickAction href="/exams" icon={GraduationCap} label="Exam Routine" />

@@ -216,6 +216,14 @@ export interface MetaRecord {
   value: string;
 }
 
+// ── Lab Groups (Admin-Configurable) ──────────────────
+export interface LabGroup {
+  group: string;      // e.g. 'P', 'Q', 'R'
+  rollStart: number;  // e.g. 2
+  rollEnd: number;    // e.g. 65
+  label: string;      // e.g. 'Group P (Roll 2–65)'
+}
+
 // ── Exam Routine System ──────────────────────────────
 export type ExamType = 'in_course' | 'semester_final' | 'nu_final';
 
@@ -312,6 +320,7 @@ export interface MainData {
   routine: RoutineSlot[];
   exams: Exam[];
   examRoutines?: ExamRoutineItem[];
+  labGroups?: LabGroup[];
   scholarshipResults?: StudentResultRecord[];
   scholarshipConfig?: ScholarshipConfig;
   updatedAt?: string | Date;

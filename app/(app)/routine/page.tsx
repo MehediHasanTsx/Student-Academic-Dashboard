@@ -11,8 +11,10 @@ import {
   DAYS_OF_WEEK,
   DAY_LABELS,
   DEFAULT_5TH_SEMESTER_ROUTINE_META,
+  DEFAULT_LAB_GROUPS,
   ROUTINE_TEACHER_LEGEND,
 } from '@/lib/constants';
+import type { RoutineSlot, DayOfWeek, LabGroup } from '@/types/database';
 import { formatTime, getCurrentDay } from '@/lib/utils/formatters';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -62,7 +64,6 @@ import {
   CloudDownload,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { RoutineSlot, DayOfWeek } from '@/types/database';
 
 export default function RoutinePage() {
   const { profile } = useProfile();
@@ -71,7 +72,8 @@ export default function RoutinePage() {
   const { subjects } = useSubjects(semesterId);
 
   const [routine, setRoutine] = useState<RoutineSlot[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<'All' | 'P' | 'Q' | 'R' | 'my'>('All');
+  const [labGroups, setLabGroups] = useState<LabGroup[]>(DEFAULT_LAB_GROUPS);
+  const [selectedGroup, setSelectedGroup] = useState<string>('All');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSlot, setEditingSlot] = useState<RoutineSlot | null>(null);
   const [defaultDay, setDefaultDay] = useState<DayOfWeek>('sunday');
@@ -81,17 +83,33 @@ export default function RoutinePage() {
   const [syncingOfficial, setSyncingOfficial] = useState(false);
   const today = getCurrentDay();
 
-  // Detect user's lab group from roll number
-  const myGroup = useMemo<'P' | 'Q' | 'R' | null>(() => {
-    if (!profile?.rollNumber) return null;
-    const clean = profile.rollNumber.replace(/\D/g, '');
+  // Load configured lab groups from main-data
+  useEffect(() => {
+    let isMounted = true;
+    async function loadGroups() {
+      try {
+        const main = await mainDataService.fetchMainData(semesterId || 'semester-5');
+        if (isMounted && main?.labGroups && main.labGroups.length > 0) {
+          setLabGroups(main.labGroups);
+        }
+      } catch {
+        // use DEFAULT_LAB_GROUPS fallback
+      }
+    }
+    void loadGroups();
+    return () => { isMounted = false; };
+  }, [semesterId]);
+
+  // Detect user's lab group from roll number and configured labGroups
+  const rollNumber = profile?.rollNumber;
+  const myGroup = useMemo<string | null>(() => {
+    if (!rollNumber) return null;
+    const clean = rollNumber.replace(/\D/g, '');
     const roll = parseInt(clean, 10);
     if (isNaN(roll)) return null;
-    if (roll >= 2 && roll <= 65) return 'P';
-    if (roll >= 66 && roll <= 126) return 'Q';
-    if (roll >= 127 && roll <= 193) return 'R';
-    return null;
-  }, [profile?.rollNumber]);
+    const matched = labGroups.find((g) => roll >= g.rollStart && roll <= g.rollEnd);
+    return matched ? matched.group : null;
+  }, [rollNumber, labGroups]);
 
   const loadData = async () => {
     if (!semesterId) return;
@@ -107,9 +125,24 @@ export default function RoutinePage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-fetching from IndexedDB
-    void loadData();
-  }, [semesterId]); // eslint-disable-line react-hooks/exhaustive-deps
+    let isCancelled = false;
+    async function fetchData() {
+      if (!semesterId) return;
+      let data = await routineService.getBySemester(semesterId);
+      if (isCancelled) return;
+      if (data.length === 0 && profile?.currentSemester === 5) {
+        await seed5thSemesterRoutine();
+        if (isCancelled) return;
+        data = await routineService.getBySemester(semesterId);
+        if (isCancelled) return;
+      }
+      setRoutine(data);
+    }
+    void fetchData();
+    return () => {
+      isCancelled = true;
+    };
+  }, [semesterId, profile?.currentSemester]);
 
   const effectiveGroup = selectedGroup === 'my' ? (myGroup || 'All') : selectedGroup;
 
@@ -198,8 +231,17 @@ export default function RoutinePage() {
 
         {/* Lab Grouping Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-border/60">
-          {DEFAULT_5TH_SEMESTER_ROUTINE_META.labGroups.map((lg) => {
+          {labGroups.map((lg, idx) => {
             const isMyGroup = myGroup === lg.group;
+            const badgeColors = [
+              'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+              'bg-amber-500/20 text-amber-600 dark:text-amber-400',
+              'bg-purple-500/20 text-purple-600 dark:text-purple-400',
+              'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+              'bg-pink-500/20 text-pink-600 dark:text-pink-400',
+            ];
+            const colorClass = badgeColors[idx % badgeColors.length];
+
             return (
               <div
                 key={lg.group}
@@ -210,20 +252,12 @@ export default function RoutinePage() {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-md font-bold text-xs ${
-                      lg.group === 'P'
-                        ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                        : lg.group === 'Q'
-                        ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                        : 'bg-purple-500/20 text-purple-600 dark:text-purple-400'
-                    }`}
-                  >
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-md font-bold text-xs ${colorClass}`}>
                     {lg.group}
                   </span>
                   <div>
-                    <p className="font-semibold text-foreground">{lg.label}</p>
-                    <p className="text-[10px] text-muted-foreground">Roll range: {lg.rollRange}</p>
+                    <p className="font-semibold text-foreground">{lg.label || `Group ${lg.group}`}</p>
+                    <p className="text-[10px] text-muted-foreground">Roll: {lg.rollStart}–{lg.rollEnd}</p>
                   </div>
                 </div>
                 {isMyGroup && (
@@ -265,30 +299,17 @@ export default function RoutinePage() {
             </Button>
           )}
 
-          <Button
-            variant={selectedGroup === 'P' ? 'default' : 'outline'}
-            size="sm"
-            className="h-7 text-xs rounded-full px-3"
-            onClick={() => setSelectedGroup('P')}
-          >
-            Group P
-          </Button>
-          <Button
-            variant={selectedGroup === 'Q' ? 'default' : 'outline'}
-            size="sm"
-            className="h-7 text-xs rounded-full px-3"
-            onClick={() => setSelectedGroup('Q')}
-          >
-            Group Q
-          </Button>
-          <Button
-            variant={selectedGroup === 'R' ? 'default' : 'outline'}
-            size="sm"
-            className="h-7 text-xs rounded-full px-3"
-            onClick={() => setSelectedGroup('R')}
-          >
-            Group R
-          </Button>
+          {labGroups.map((lg) => (
+            <Button
+              key={lg.group}
+              variant={selectedGroup === lg.group ? 'default' : 'outline'}
+              size="sm"
+              className="h-7 text-xs rounded-full px-3"
+              onClick={() => setSelectedGroup(lg.group)}
+            >
+              Group {lg.group}
+            </Button>
+          ))}
         </div>
 
         {/* Controls */}
@@ -598,6 +619,7 @@ export default function RoutinePage() {
             slot={editingSlot}
             defaultDay={defaultDay}
             subjects={subjects}
+            labGroups={labGroups}
             onSubmit={async (data) => {
               if (!semesterId) return;
               if (editingSlot) {
@@ -666,12 +688,14 @@ function RoutineForm({
   slot,
   defaultDay,
   subjects,
+  labGroups,
   onSubmit,
   onCancel,
 }: {
   slot: RoutineSlot | null;
   defaultDay: DayOfWeek;
   subjects: { id: string; name: string; code?: string }[];
+  labGroups: LabGroup[];
   onSubmit: (data: RoutineSlotFormData) => Promise<void>;
   onCancel: () => void;
 }) {
@@ -772,9 +796,11 @@ function RoutineForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All / Theory (Everyone)</SelectItem>
-                <SelectItem value="P">Group P (Roll 2–65)</SelectItem>
-                <SelectItem value="Q">Group Q (Roll 66–126)</SelectItem>
-                <SelectItem value="R">Group R (Roll 127–193)</SelectItem>
+                {labGroups.map((g) => (
+                  <SelectItem key={g.group} value={g.group}>
+                    {g.label || `Group ${g.group} (Roll ${g.rollStart}–${g.rollEnd})`}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

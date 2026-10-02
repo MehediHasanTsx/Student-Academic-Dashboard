@@ -169,6 +169,12 @@ export const DEFAULT_5TH_SEMESTER_SUBJECTS = [
   },
 ];
 
+export const DEFAULT_LAB_GROUPS = [
+  { group: 'P', rollStart: 2, rollEnd: 65, label: 'Group P (Roll 2–65)' },
+  { group: 'Q', rollStart: 66, rollEnd: 126, label: 'Group Q (Roll 66–126)' },
+  { group: 'R', rollStart: 127, rollEnd: 193, label: 'Group R (Roll 127–193)' },
+];
+
 export const DEFAULT_5TH_SEMESTER_ROUTINE_META = {
   title: '5th Semester Class Routine (Revised)',
   session: '2022-2023',
@@ -176,11 +182,7 @@ export const DEFAULT_5TH_SEMESTER_ROUTINE_META = {
   effectiveDate: '29th September, 2026',
   section: 'Section B (Roll: 89- 193)',
   room: '641',
-  labGroups: [
-    { group: 'P', rollRange: '2-65', label: 'Group P (Roll 2–65)' },
-    { group: 'Q', rollRange: '66-126', label: 'Group Q (Roll 66–126)' },
-    { group: 'R', rollRange: '127-193', label: 'Group R (Roll 127–193)' },
-  ],
+  labGroups: DEFAULT_LAB_GROUPS,
 };
 
 export const ROUTINE_TEACHER_LEGEND = [

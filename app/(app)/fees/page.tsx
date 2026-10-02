@@ -101,7 +101,7 @@ export default function FeesPage() {
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card className="border-border/70">
           <CardContent className="p-4">
-            <p className="text-xs font-medium text-muted-foreground mb-1">Total Fees (মোট ধার্য)</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">Total Fees</p>
             <p className="text-2xl font-bold">{formatCurrency(summary?.totalFees || 0)}</p>
             <p className="text-[0.7rem] text-muted-foreground mt-1">All charges for this semester</p>
           </CardContent>
@@ -109,7 +109,7 @@ export default function FeesPage() {
 
         <Card className="border-border/70">
           <CardContent className="p-4">
-            <p className="text-xs font-medium text-muted-foreground mb-1">Total Paid (পরিশোধিত)</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">Total Paid</p>
             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {formatCurrency(summary?.totalPaid || 0)}
             </p>
@@ -119,7 +119,7 @@ export default function FeesPage() {
 
         <Card className="border-border/70">
           <CardContent className="p-4">
-            <p className="text-xs font-medium text-muted-foreground mb-1">Remaining Due (বাকি আছে)</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">Remaining Due</p>
             <p className={`text-2xl font-bold ${(summary?.remainingDue || 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
               {formatCurrency(summary?.remainingDue || 0)}
             </p>
@@ -572,7 +572,7 @@ function PaymentForm({
       <div className="space-y-4 py-4">
         {/* Link to Fee */}
         <div className="space-y-2">
-          <Label>Apply to Fee (ফি নির্বাচন করুন)</Label>
+          <Label>Apply to Fee</Label>
           <Select value={selectedFeeId || 'none'} onValueChange={handleSelectFee}>
             <SelectTrigger><SelectValue placeholder="Select fee" /></SelectTrigger>
             <SelectContent>

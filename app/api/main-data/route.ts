@@ -8,6 +8,7 @@ import {
   DEFAULT_5TH_SEMESTER_SUBJECTS,
   DEFAULT_5TH_SEMESTER_ROUTINE,
   DEFAULT_5TH_SEMESTER_EXAM_ROUTINE,
+  DEFAULT_LAB_GROUPS,
   DEFAULT_SCHOLARSHIP_CONFIG,
 } from '@/lib/constants';
 
@@ -47,6 +48,7 @@ function getDefaultFallback(semesterId = 'semester-5') {
     routine,
     exams: [],
     examRoutines: semesterId === 'semester-5' ? DEFAULT_5TH_SEMESTER_EXAM_ROUTINE : [],
+    labGroups: semesterId === 'semester-5' ? DEFAULT_LAB_GROUPS : [],
     scholarshipConfig: DEFAULT_SCHOLARSHIP_CONFIG,
     scholarshipResults: [],
     updatedAt: new Date().toISOString(),
@@ -88,6 +90,7 @@ export async function GET(request: NextRequest) {
         routine: row.routine,
         exams: row.exams,
         examRoutines: row.examRoutines || (semesterId === 'semester-5' ? DEFAULT_5TH_SEMESTER_EXAM_ROUTINE : []),
+        labGroups: row.labGroups || (semesterId === 'semester-5' ? DEFAULT_LAB_GROUPS : []),
         scholarshipConfig: row.scholarshipConfig || DEFAULT_SCHOLARSHIP_CONFIG,
         scholarshipResults: row.scholarshipResults || [],
         updatedAt: row.updatedAt,
@@ -126,6 +129,7 @@ export async function POST(request: NextRequest) {
       routine,
       exams,
       examRoutines,
+      labGroups,
       scholarshipConfig,
       scholarshipResults,
     } = body;
@@ -155,6 +159,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (examRoutines !== undefined) updatePayload.examRoutines = examRoutines;
+    if (labGroups !== undefined) updatePayload.labGroups = labGroups;
     if (scholarshipConfig !== undefined) updatePayload.scholarshipConfig = scholarshipConfig;
     if (scholarshipResults !== undefined) updatePayload.scholarshipResults = scholarshipResults;
 
@@ -171,6 +176,7 @@ export async function POST(request: NextRequest) {
         routine,
         exams: Array.isArray(exams) ? exams : [],
         examRoutines: Array.isArray(examRoutines) ? examRoutines : [],
+        labGroups: Array.isArray(labGroups) ? labGroups : [],
         scholarshipConfig: scholarshipConfig || DEFAULT_SCHOLARSHIP_CONFIG,
         scholarshipResults: Array.isArray(scholarshipResults) ? scholarshipResults : [],
         updatedAt: now,

@@ -27,6 +27,7 @@ export const mainDataService = {
       routine: RoutineSlot[];
       exams?: Exam[];
       examRoutines?: ExamRoutineItem[];
+      labGroups?: import('@/types/database').LabGroup[];
       scholarshipConfig?: ScholarshipConfig;
       scholarshipResults?: StudentResultRecord[];
     }
@@ -41,6 +42,7 @@ export const mainDataService = {
         routine: payload.routine,
         exams: payload.exams || [],
         examRoutines: payload.examRoutines,
+        labGroups: payload.labGroups,
         scholarshipConfig: payload.scholarshipConfig,
         scholarshipResults: payload.scholarshipResults,
       }),

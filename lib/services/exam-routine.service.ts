@@ -54,9 +54,34 @@ export const examRoutineService = {
   },
 
   /**
-   * Restores official default routines (e.g. 5th semester In-Course routine).
+   * Restores official default routines (e.g. from server Main Data or local constants fallback).
    */
-  async resetToOfficialRoutine(semesterId = 'semester-5'): Promise<void> {
+  async resetToOfficialRoutine(semesterId = 'semester-5'): Promise<number> {
+    try {
+      const res = await fetch(`/api/main-data?semesterId=${encodeURIComponent(semesterId)}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const serverRoutines: ExamRoutineItem[] = json?.data?.examRoutines;
+        if (Array.isArray(serverRoutines) && serverRoutines.length > 0) {
+          await db().examRoutines.where('semesterId').equals(semesterId).delete();
+          const now = new Date();
+          for (const item of serverRoutines) {
+            await db().examRoutines.put({
+              ...item,
+              semesterId,
+              createdAt: now,
+              updatedAt: now,
+            });
+          }
+          return serverRoutines.length;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync exam routines from server, falling back to local defaults', err);
+    }
+
     if (semesterId === 'semester-5') {
       await db().examRoutines.where('semesterId').equals('semester-5').delete();
       const now = new Date();
@@ -67,7 +92,9 @@ export const examRoutineService = {
           updatedAt: now,
         });
       }
+      return DEFAULT_5TH_SEMESTER_EXAM_ROUTINE.length;
     }
+    return 0;
   },
 
   /**

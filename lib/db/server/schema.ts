@@ -76,6 +76,7 @@ export const mainData = pgTable('main_data', {
   routine: jsonb('routine').notNull().default([]),
   exams: jsonb('exams').notNull().default([]),
   examRoutines: jsonb('exam_routines').notNull().default([]),
+  labGroups: jsonb('lab_groups').notNull().default([]),
   scholarshipResults: jsonb('scholarship_results').notNull().default([]),
   scholarshipConfig: jsonb('scholarship_config').notNull().default({}),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
