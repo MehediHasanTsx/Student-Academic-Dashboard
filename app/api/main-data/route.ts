@@ -191,8 +191,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to save main data:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while saving main data.';
     return NextResponse.json(
-      { error: 'An unexpected error occurred while saving main data.' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
