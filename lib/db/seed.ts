@@ -39,6 +39,8 @@ export async function seedInitialMainData(force = false): Promise<void> {
       if (routineCount === 0 || force) {
         await mainDataService.syncRoutineWithMain('semester-5');
       }
+      await mainDataService.syncExamRoutinesWithMain('semester-5');
+      await mainDataService.syncAssignmentsWithMain('semester-5');
       return;
     }
   } catch {

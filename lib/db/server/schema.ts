@@ -75,6 +75,7 @@ export const mainData = pgTable('main_data', {
   subjects: jsonb('subjects').notNull().default([]),
   routine: jsonb('routine').notNull().default([]),
   exams: jsonb('exams').notNull().default([]),
+  assignments: jsonb('assignments').notNull().default([]),
   examRoutines: jsonb('exam_routines').notNull().default([]),
   labGroups: jsonb('lab_groups').notNull().default([]),
   scholarshipResults: jsonb('scholarship_results').notNull().default([]),

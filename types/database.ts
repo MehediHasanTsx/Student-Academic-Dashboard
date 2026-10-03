@@ -319,6 +319,7 @@ export interface MainData {
   subjects: Subject[];
   routine: RoutineSlot[];
   exams: Exam[];
+  assignments?: Assignment[];
   examRoutines?: ExamRoutineItem[];
   labGroups?: LabGroup[];
   scholarshipResults?: StudentResultRecord[];

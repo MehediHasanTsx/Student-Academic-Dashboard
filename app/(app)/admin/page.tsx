@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { mainDataService } from '@/lib/services/main-data.service';
-import type { Subject, RoutineSlot, Exam, DayOfWeek, SubjectType, ExamRoutineItem, LabGroup, SeatPlanRange, ExamType } from '@/types/database';
+import type { Subject, RoutineSlot, Exam, Assignment, AssignmentPriority, DayOfWeek, SubjectType, ExamRoutineItem, LabGroup, SeatPlanRange, ExamType } from '@/types/database';
 import { DAYS_OF_WEEK, DAY_LABELS, SEMESTER_COUNT, DEFAULT_LAB_GROUPS, DEFAULT_5TH_SEMESTER_EXAM_ROUTINE } from '@/lib/constants';
 import { formatTime, generateId } from '@/lib/utils/formatters';
 
@@ -28,6 +28,7 @@ import {
   ChevronUp,
   ChevronDown,
   BookOpen,
+  ClipboardList,
   Calendar,
   GraduationCap,
   Clock,
@@ -69,6 +70,7 @@ export default function AdminPage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [examRoutines, setExamRoutines] = useState<ExamRoutineItem[]>([]);
   const [labGroups, setLabGroups] = useState<LabGroup[]>(DEFAULT_LAB_GROUPS);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState('subjects');
@@ -97,8 +99,11 @@ export default function AdminPage() {
   const [examDialogOpen, setExamDialogOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
 
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+
   const [deleteTarget, setDeleteTarget] = useState<{
-    type: 'subject' | 'routine' | 'labGroup' | 'examRoutine' | 'exam';
+    type: 'subject' | 'routine' | 'labGroup' | 'examRoutine' | 'exam' | 'assignment';
     id: string;
     name: string;
   } | null>(null);
@@ -111,6 +116,7 @@ export default function AdminPage() {
       setSubjects(data.subjects || []);
       setRoutine(data.routine || []);
       setExams(data.exams || []);
+      setAssignments(data.assignments || []);
       setExamRoutines(data.examRoutines || (semId === 'semester-5' ? DEFAULT_5TH_SEMESTER_EXAM_ROUTINE : []));
       setLabGroups(data.labGroups && data.labGroups.length > 0 ? data.labGroups : (semId === 'semester-5' ? DEFAULT_LAB_GROUPS : []));
       setLastPublished(data.updatedAt ? new Date(data.updatedAt).toLocaleString() : null);
@@ -142,6 +148,7 @@ export default function AdminPage() {
         subjects,
         routine,
         exams,
+        assignments,
         examRoutines,
         labGroups,
       });
@@ -166,6 +173,7 @@ export default function AdminPage() {
       labGroups,
       examRoutines,
       exams,
+      assignments,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -328,6 +336,35 @@ export default function AdminPage() {
     setEditingExam(null);
   };
 
+  // ── Assignment Operations ────────────────────────────────
+  const handleSaveAssignment = (assData: Partial<Assignment>) => {
+    const now = new Date();
+    if (editingAssignment) {
+      setAssignments((prev) =>
+        prev.map((a) => (a.id === editingAssignment.id ? ({ ...a, ...assData, updatedAt: now } as Assignment) : a))
+      );
+      toast.success('Assignment updated in draft.');
+    } else {
+      const newAss: Assignment = {
+        id: generateId(),
+        semesterId,
+        subjectId: assData.subjectId || '',
+        title: assData.title || '',
+        deadline: assData.deadline || new Date().toISOString(),
+        priority: assData.priority || 'medium',
+        status: 'pending',
+        description: assData.description,
+        createdAt: now,
+        updatedAt: now,
+      };
+      setAssignments((prev) => [...prev, newAss]);
+      toast.success('Assignment added to draft.');
+    }
+    setIsDraftDirty(true);
+    setAssignmentDialogOpen(false);
+    setEditingAssignment(null);
+  };
+
   // ── Deletion execution ──────────────────────────────────
   const executeDelete = () => {
     if (!deleteTarget) return;
@@ -347,6 +384,9 @@ export default function AdminPage() {
     } else if (deleteTarget.type === 'exam') {
       setExams((prev) => prev.filter((e) => e.id !== deleteTarget.id));
       toast.success('Exam removed from draft.');
+    } else if (deleteTarget.type === 'assignment') {
+      setAssignments((prev) => prev.filter((a) => a.id !== deleteTarget.id));
+      toast.success('Assignment removed from draft.');
     }
     setIsDraftDirty(true);
     setDeleteTarget(null);
@@ -531,6 +571,19 @@ export default function AdminPage() {
           </div>
 
           <div
+            onClick={() => setActiveTab('assignments')}
+            className="rounded-2xl border border-border/70 bg-card/60 hover:bg-card hover:border-primary/40 p-3.5 text-center transition-all cursor-pointer group shadow-2xs"
+          >
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-1">
+              <ClipboardList className="h-3 w-3 text-primary" /> Assignments
+            </p>
+            <p className="text-xl font-bold text-foreground mt-1 group-hover:text-primary transition-colors">
+              {assignments.length}
+            </p>
+            <span className="text-[10px] text-muted-foreground">Published tasks</span>
+          </div>
+
+          <div
             onClick={() => setActiveTab('exams')}
             className="rounded-2xl border border-border/70 bg-card/60 hover:bg-card hover:border-primary/40 p-3.5 text-center col-span-2 sm:col-span-1 transition-all cursor-pointer group shadow-2xs"
           >
@@ -594,6 +647,10 @@ export default function AdminPage() {
             <TabsTrigger value="examRoutine" className="text-xs px-4 py-2 gap-2 font-semibold rounded-xl shrink-0 transition-all data-active:bg-background data-active:text-foreground data-active:shadow-xs">
               <FileText className="h-4 w-4" />
               Exam Routine ({examRoutines.length})
+            </TabsTrigger>
+            <TabsTrigger value="assignments" className="text-xs px-4 py-2 gap-2 font-semibold rounded-xl shrink-0 transition-all data-active:bg-background data-active:text-foreground data-active:shadow-xs">
+              <ClipboardList className="h-4 w-4" />
+              Assignments ({assignments.length})
             </TabsTrigger>
             <TabsTrigger value="exams" className="text-xs px-4 py-2 gap-2 font-semibold rounded-xl shrink-0 transition-all data-active:bg-background data-active:text-foreground data-active:shadow-xs">
               <GraduationCap className="h-4 w-4" />
@@ -1269,7 +1326,118 @@ export default function AdminPage() {
         </TabsContent>
 
         {/* ═══════════════════════════════════════════════════════════════════════════
-            TAB 5: EXAMS (Calendar / Student Countdown)
+            TAB 5: ASSIGNMENTS (Admin-Published)
+        ═══════════════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="assignments" className="space-y-4">
+          <Card className="rounded-2xl border-border/80 shadow-2xs">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <div className="space-y-1">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-primary" />
+                  Published Assignments
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Assignments published here sync to all students&apos; dashboards automatically.
+                </CardDescription>
+              </div>
+              <Button
+                size="sm"
+                className="h-8 text-xs gap-1.5 rounded-lg shadow-xs"
+                onClick={() => {
+                  setEditingAssignment(null);
+                  setAssignmentDialogOpen(true);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Assignment
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {assignments.length === 0 ? (
+                <div className="py-14 text-center text-muted-foreground text-xs space-y-2">
+                  <ClipboardList className="h-8 w-8 mx-auto opacity-30" />
+                  <p>No assignments published. Click &quot;Add Assignment&quot; to create one.</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {assignments.map((ass) => {
+                    const sub = subjectMap.get(ass.subjectId);
+                    const priorityColors: Record<string, string> = {
+                      high: 'bg-red-500/10 text-red-600 border-red-500/30',
+                      medium: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+                      low: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+                    };
+                    return (
+                      <div
+                        key={ass.id}
+                        className="flex items-center justify-between p-3.5 rounded-xl border border-border/70 bg-card hover:bg-muted/30 transition-colors gap-3 group"
+                      >
+                        <div className="min-w-0 flex items-center gap-3">
+                          <div
+                            className="w-3 h-11 rounded-full shrink-0 shadow-2xs"
+                            style={{ backgroundColor: sub?.color || '#3B82F6' }}
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-bold text-sm text-foreground truncate">{ass.title}</p>
+                              {sub && (
+                                <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-4.5 font-semibold">
+                                  {sub.name} ({sub.code})
+                                </Badge>
+                              )}
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase ${priorityColors[ass.priority] || ''}`}>
+                                {ass.priority}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                              <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                                <Calendar className="h-3 w-3 text-primary" /> Deadline: {ass.deadline.split('T')[0]}
+                              </span>
+                              {ass.description && <span>· {ass.description.slice(0, 60)}{ass.description.length > 60 ? '...' : ''}</span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => {
+                              setEditingAssignment(ass);
+                              setAssignmentDialogOpen(true);
+                            }}
+                            title="Edit Assignment"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() =>
+                              setDeleteTarget({
+                                type: 'assignment',
+                                id: ass.id,
+                                name: `${ass.title} (${ass.deadline.split('T')[0]})`,
+                              })
+                            }
+                            title="Delete Assignment"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ═══════════════════════════════════════════════════════════════════════════
+            TAB 6: EXAMS (Calendar / Student Countdown)
         ═══════════════════════════════════════════════════════════════════════════ */}
         <TabsContent value="exams" className="space-y-4">
           <Card className="rounded-2xl border-border/80 shadow-2xs">
@@ -1461,6 +1629,24 @@ export default function AdminPage() {
             subjects={subjects}
             onSubmit={handleSaveExam}
             onCancel={() => setExamDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Assignment Dialog */}
+      <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingAssignment ? 'Edit Assignment' : 'Add Assignment'}</DialogTitle>
+            <DialogDescription>
+              Publish an assignment that syncs to all students&apos; dashboards.
+            </DialogDescription>
+          </DialogHeader>
+          <AssignmentFormModal
+            assignment={editingAssignment}
+            subjects={subjects}
+            onSubmit={handleSaveAssignment}
+            onCancel={() => setAssignmentDialogOpen(false)}
           />
         </DialogContent>
       </Dialog>
@@ -2085,6 +2271,88 @@ function ExamFormModal({
       <DialogFooter className="pt-2">
         <Button type="button" variant="ghost" onClick={onCancel} className="rounded-lg">Cancel</Button>
         <Button type="submit" className="rounded-lg">{exam ? 'Update Exam' : 'Add Exam'}</Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+function AssignmentFormModal({
+  assignment,
+  subjects,
+  onSubmit,
+  onCancel,
+}: {
+  assignment: Assignment | null;
+  subjects: Subject[];
+  onSubmit: (data: Partial<Assignment>) => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(assignment?.title || '');
+  const [subjectId, setSubjectId] = useState(assignment?.subjectId || subjects[0]?.id || '');
+  const [deadline, setDeadline] = useState(
+    assignment?.deadline
+      ? assignment.deadline.includes('T') ? assignment.deadline.slice(0, 16) : assignment.deadline
+      : new Date().toISOString().slice(0, 16)
+  );
+  const [priority, setPriority] = useState<AssignmentPriority>(assignment?.priority || 'medium');
+  const [description, setDescription] = useState(assignment?.description || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return toast.error('Assignment title is required.');
+    if (!subjectId) return toast.error('Please select a subject.');
+    onSubmit({
+      title: title.trim(),
+      subjectId,
+      deadline: new Date(deadline).toISOString(),
+      priority,
+      description: description.trim() || undefined,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+      <div className="space-y-1.5">
+        <Label>Title *</Label>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Lab Report #3" className="rounded-lg text-xs" required />
+      </div>
+      <div className="space-y-1.5">
+        <Label>Subject *</Label>
+        <Select value={subjectId} onValueChange={(v) => { if (v) setSubjectId(v); }}>
+          <SelectTrigger className="rounded-lg text-xs"><SelectValue placeholder="Select subject" /></SelectTrigger>
+          <SelectContent>
+            {subjects.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name} ({s.code})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label>Deadline *</Label>
+          <Input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="rounded-lg text-xs" required />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Priority</Label>
+          <Select value={priority} onValueChange={(v) => { if (v) setPriority(v as AssignmentPriority); }}>
+            <SelectTrigger className="rounded-lg text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label>Description (optional)</Label>
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description or instructions..." className="rounded-lg text-xs min-h-15" />
+      </div>
+      <DialogFooter className="pt-2">
+        <Button type="button" variant="ghost" onClick={onCancel} className="rounded-lg">Cancel</Button>
+        <Button type="submit" className="rounded-lg">{assignment ? 'Update Assignment' : 'Add Assignment'}</Button>
       </DialogFooter>
     </form>
   );

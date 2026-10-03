@@ -1,5 +1,5 @@
 import { db } from '@/lib/db/database';
-import type { MainData, Subject, RoutineSlot, Exam, ExamRoutineItem, ScholarshipConfig, StudentResultRecord } from '@/types/database';
+import type { MainData, Subject, RoutineSlot, Exam, Assignment, ExamRoutineItem, ScholarshipConfig, StudentResultRecord } from '@/types/database';
 import { generateId } from '@/lib/utils/formatters';
 
 export const mainDataService = {
@@ -26,6 +26,7 @@ export const mainDataService = {
       subjects: Subject[];
       routine: RoutineSlot[];
       exams?: Exam[];
+      assignments?: Assignment[];
       examRoutines?: ExamRoutineItem[];
       labGroups?: import('@/types/database').LabGroup[];
       scholarshipConfig?: ScholarshipConfig;
@@ -41,6 +42,7 @@ export const mainDataService = {
         subjects: payload.subjects,
         routine: payload.routine,
         exams: payload.exams || [],
+        assignments: payload.assignments || [],
         examRoutines: payload.examRoutines,
         labGroups: payload.labGroups,
         scholarshipConfig: payload.scholarshipConfig,
@@ -261,6 +263,69 @@ export const mainDataService = {
           semesterId,
           updatedAt: now,
         });
+        count++;
+      }
+    });
+
+    return { count };
+  },
+
+  /**
+   * Sync class assignments with Main Data (Admin published assignments).
+   * Adds or updates authoritative assignments without clobbering personal assignments.
+   */
+  async syncAssignmentsWithMain(semesterId = 'semester-5'): Promise<{ count: number }> {
+    const main = await this.fetchMainData(semesterId);
+    if (!main || !main.assignments || !Array.isArray(main.assignments) || main.assignments.length === 0) {
+      return { count: 0 };
+    }
+
+    const localAssignments = await db().assignments.where('semesterId').equals(semesterId).toArray();
+    const localById = new Map(localAssignments.map((a) => [a.id, a]));
+
+    // Map subject IDs if needed
+    const localSubjects = await db().subjects.where('semesterId').equals(semesterId).toArray();
+    const localByIdSub = new Map(localSubjects.map((s) => [s.id, s]));
+    const localByCodeSub = new Map(localSubjects.map((s) => [s.code.trim().toLowerCase(), s]));
+
+    const now = new Date();
+    let count = 0;
+
+    await db().transaction('rw', db().assignments, async () => {
+      for (const mainAss of main.assignments!) {
+        let targetSubjectId = mainAss.subjectId;
+        if (!localByIdSub.has(targetSubjectId)) {
+          const mainSub = main.subjects?.find((s) => s.id === mainAss.subjectId);
+          if (mainSub) {
+            const localSub = localByCodeSub.get(mainSub.code.trim().toLowerCase());
+            if (localSub) {
+              targetSubjectId = localSub.id;
+            }
+          }
+        }
+
+        const existing = localById.get(mainAss.id);
+        if (existing) {
+          // Update details, keep user's personal completion status if already completed
+          await db().assignments.update(existing.id, {
+            title: mainAss.title,
+            subjectId: targetSubjectId,
+            deadline: mainAss.deadline,
+            priority: mainAss.priority,
+            description: mainAss.description,
+            updatedAt: now,
+          });
+        } else {
+          await db().assignments.add({
+            ...mainAss,
+            id: mainAss.id || generateId(),
+            semesterId,
+            subjectId: targetSubjectId,
+            status: mainAss.status || 'pending',
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
         count++;
       }
     });

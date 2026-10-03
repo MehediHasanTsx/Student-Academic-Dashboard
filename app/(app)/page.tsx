@@ -7,7 +7,8 @@ import { useAttendance } from '@/lib/hooks/useAttendance';
 import { useSubjects } from '@/lib/hooks/useSubjects';
 import { gpaService, type CgpaResult } from '@/lib/services/gpa.service';
 import { assignmentService } from '@/lib/services/assignment.service';
-import { examService } from '@/lib/services/exam.service';
+import { examRoutineService } from '@/lib/services/exam-routine.service';
+import { mainDataService } from '@/lib/services/main-data.service';
 import { feeService, type FeeSummary } from '@/lib/services/fee.service';
 import { routineService } from '@/lib/services/routine.service';
 import { formatCurrency, formatDate, formatTime, getCurrentDay } from '@/lib/utils/formatters';
@@ -40,7 +41,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Assignment, Exam, RoutineSlot, Subject, DayOfWeek, AttendanceStatus } from '@/types/database';
+import type { Assignment, ExamRoutineItem, RoutineSlot, Subject, DayOfWeek, AttendanceStatus } from '@/types/database';
 
 export default function DashboardPage() {
   const { profile } = useProfile();
@@ -51,7 +52,7 @@ export default function DashboardPage() {
   const [cgpa, setCgpa] = useState<CgpaResult | null>(null);
   const [semesterGpa, setSemesterGpa] = useState<number>(0);
   const [upcomingAssignments, setUpcomingAssignments] = useState<Assignment[]>([]);
-  const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
+  const [upcomingExams, setUpcomingExams] = useState<ExamRoutineItem[]>([]);
   const [todayClasses, setTodayClasses] = useState<(RoutineSlot & { subject?: Subject })[]>([]);
   const [feeSummary, setFeeSummary] = useState<FeeSummary | null>(null);
   const [quickAttendanceOpen, setQuickAttendanceOpen] = useState(false);
@@ -62,10 +63,20 @@ export default function DashboardPage() {
 
     const loadDashboardData = async () => {
       try {
-        const [cgpaResult, assignments, exams, fees, payments, routine] = await Promise.all([
+        // Sync published assignments and official exam routines from cloud
+        try {
+          await Promise.allSettled([
+            mainDataService.syncAssignmentsWithMain(semesterId),
+            mainDataService.syncExamRoutinesWithMain(semesterId),
+          ]);
+        } catch {
+          // Continue with local data if offline or cloud unavailable
+        }
+
+        const [cgpaResult, assignments, allExamRoutines, fees, payments, routine] = await Promise.all([
           gpaService.calculateCgpa(),
           assignmentService.getUpcoming(semesterId),
-          examService.getUpcoming(semesterId),
+          examRoutineService.getExamRoutines(semesterId),
           feeService.getBySemester(semesterId),
           feeService.getPaymentsBySemester(semesterId),
           routineService.getBySemester(semesterId),
@@ -77,7 +88,16 @@ export default function DashboardPage() {
         setSemesterGpa(semGpa?.gpa || 0);
 
         setUpcomingAssignments(assignments.slice(0, 3));
-        setUpcomingExams(exams.slice(0, 3));
+
+        // Auto-derive upcoming exams from exam routine data
+        // Only show exams whose date is today or in the future, sorted by date
+        const todayStr = new Date().toISOString().split('T')[0];
+        const upcomingFromRoutine = allExamRoutines
+          .filter((r) => r.date >= todayStr)
+          .sort((a, b) => a.date.localeCompare(b.date))
+          .slice(0, 3);
+        setUpcomingExams(upcomingFromRoutine);
+
         setFeeSummary(feeService.calculateSummary(fees, payments));
 
         // Today's classes
@@ -409,18 +429,20 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {upcomingExams.map((e) => {
-                  const subject = subjects.find((s) => s.id === e.subjectId);
                   const todayStr = new Date().toISOString().split('T')[0];
                   const daysLeft = Math.ceil(
                     (new Date(e.date).getTime() - new Date(todayStr).getTime()) / (1000 * 60 * 60 * 24)
                   );
+                  const examTypeLabel = e.examType === 'in_course' ? 'In-Course' : e.examType === 'semester_final' ? 'Semester Final' : 'NU Final';
                   return (
                     <div key={e.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{e.name}</p>
-                        <p className="text-xs text-muted-foreground">{subject?.name}</p>
+                        <p className="text-sm font-medium truncate">{e.courseName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {examTypeLabel} · {e.courseCode} · {formatDate(e.date)}{e.time ? ` (${e.time})` : ''}
+                        </p>
                       </div>
-                      <Badge variant={daysLeft <= 3 ? 'destructive' : 'secondary'} className="ml-2 text-xs">
+                      <Badge variant={daysLeft <= 3 ? 'destructive' : 'secondary'} className="ml-2 text-xs shrink-0">
                         {daysLeft <= 0 ? 'Today' : `${daysLeft}d left`}
                       </Badge>
                     </div>

@@ -33,6 +33,12 @@ export default function AssignmentsPage() {
 
   const loadData = async () => {
     if (!semesterId) return;
+    try {
+      const { mainDataService } = await import('@/lib/services/main-data.service');
+      await mainDataService.syncAssignmentsWithMain(semesterId);
+    } catch {
+      // ignore if offline
+    }
     const data = await assignmentService.getBySemester(semesterId);
     setAssignments(data.sort((a, b) => a.deadline.localeCompare(b.deadline)));
   };
